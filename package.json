@@ -1,0 +1,25 @@
+{
+  "name": "mocha-multi",
+  "version": "0.1.0-DEV",
+  "description": "A bit of a hack to get multiple reporters working with mocha",
+  "main": "mocha-multi.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/glenjamin/mocha-multi.git"
+  },
+  "keywords": [
+    "mocha"
+  ],
+  "author": "Glen Mailer <glenjamin@gmail.com>",
+  "license": "MTI",
+  "bugs": {
+    "url": "https://github.com/glenjamin/mocha-multi/issues"
+  },
+  "homepage": "https://github.com/glenjamin/mocha-multi",
+  "devDependencies": {
+    "mocha": "~1.15.1"
+  }
+}
