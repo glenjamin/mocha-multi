@@ -4,6 +4,13 @@ var debug = require('debug')('mocha:multi');
 
 module.exports = MochaMulti
 
+// HAAAACK - attempt to trick node into waiting for the streams to finish
+var exit = process.exit;
+process.exit = function(code) {
+  var quit = exit.bind(process, code);
+  process.on('exit', quit);
+}
+
 function MochaMulti(runner) {
   initReporters(runner, parseSetup());
 }
@@ -103,24 +110,36 @@ function resolveStream(destination) {
 
 function createRunnerShim(runner, stream) {
   var shim = new (require('events').EventEmitter)();
-  var delegated = {};
+
+  addDelegate('grepTotal');
+  addDelegate('suite');
+  addDelegate('total');
+
+  function addDelegate(prop) {
+    shim.__defineGetter__(prop, function() {
+      return runner[prop];
+    });
+  }
+
+  var delegatedEvents = {};
 
   shim.on('newListener', function(event) {
-    if (!(event in delegated)) {
-      delegated[event] = true;
-      debug("Shim: Delegating '%s'", event);
 
-      runner.on(event, function() {
-        var eventArgs = Array.prototype.slice.call(arguments, 0);
-        eventArgs.unshift(event);
+    if (event in delegatedEvents) return;
 
-        withReplacedStdout(stream, function() {
-          shim.emit.apply(shim, eventArgs)
-        })
+    delegatedEvents[event] = true;
+    debug("Shim: Delegating '%s'", event);
 
+    runner.on(event, function() {
+      var eventArgs = Array.prototype.slice.call(arguments, 0);
+      eventArgs.unshift(event);
+
+      withReplacedStdout(stream, function() {
+        shim.emit.apply(shim, eventArgs)
       })
 
-    }
+    })
+
   })
 
   return shim;
@@ -131,7 +150,9 @@ function withReplacedStdout(stream, func) {
     return func();
   }
 
+  // The hackiest of hacks
   debug('Replacing stdout');
+
   var stdout = process.stdout;
   var stderr = process.stderr;
   var stdoutGetter = Object.getOwnPropertyDescriptor(process, 'stdout').get;
@@ -141,9 +162,11 @@ function withReplacedStdout(stream, func) {
   console._stderr = stream;
   process.__defineGetter__('stdout', function() { return stream });
   process.__defineGetter__('stderr', function() { return stream });
+
   try {
     func();
   } finally {
+
     debug('Restoring stdout');
     console._stdout = stdout;
     console._stderr = stderr;

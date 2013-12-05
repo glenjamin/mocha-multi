@@ -9,7 +9,7 @@ Usage
     npm install mocha-multi --save-dev
     mocha --reporter mocha-multi --no-exit
 
-No exit must be used to ensure the various streams finish writing.
+No exit will be forced on to ensure the various streams finish writing.
 
 Choosing Reporters
 ------------------
@@ -30,3 +30,19 @@ Seriously?
 ----------
 
 Yeah, Sorry!
+
+All the hacks
+-------------
+
+This is very hacky, specifically:
+
+ * Stdin is assumed to be synchronously readable and <1k
+ * The `process` and `console` objects get their internal state messed with
+ * `process.exit` is hacked to wait for streams to finish writing
+
+TODO
+----
+
+Verify the reporter output automatically.
+
+Perhaps use another process to run with/without multi and compare output?
