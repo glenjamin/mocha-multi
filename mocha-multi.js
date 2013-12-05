@@ -17,7 +17,7 @@ function MochaMulti(runner) {
 
 var msgs = {
   no_definitions: "reporter definitions must be passed via stdin\n\
-eg. echo dot=1 xunit=file.xml | mocha",
+eg. echo dot=- xunit=file.xml | mocha",
   invalid_definition: "'%s' is an invalid definition\n\
 expected <reporter>=<destination>",
   invalid_reporter: "Unable to find '%s' reporter"
