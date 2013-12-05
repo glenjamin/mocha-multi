@@ -17,7 +17,7 @@ Choosing Reporters
 
 Nothing in mocha uses stdin, so lets abuse that.
 
-    echo dot=- xunit=file.xml html=tests.html | mocha -R mocha-multi
+    echo dot=- xunit=file.xml doc=docs.html | mocha -R mocha-multi
 
 The special value `-` uses normal stdout/stderr
 
