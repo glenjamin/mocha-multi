@@ -7,9 +7,7 @@ Usage
 -----
 
     npm install mocha-multi --save-dev
-    mocha --reporter mocha-multi --no-exit
-
-No exit will be forced on to ensure the various streams finish writing.
+    mocha --reporter mocha-multi
 
 Choosing Reporters
 ------------------
@@ -18,7 +16,7 @@ Nothing in mocha uses stdin, so lets abuse that.
 
     echo dot=- xunit=file.xml html=tests.html | mocha -R mocha-multi
 
-Special values: `-` for normal stdout/stderr
+The special value `-` uses normal stdout/stderr
 
 How it works
 ------------
@@ -36,6 +34,7 @@ All the hacks
 
 This is very hacky, specifically:
 
+ * Stdin is used to receive arguments, instead of something more sensible
  * Stdin is assumed to be synchronously readable and <1k
  * The `process` and `console` objects get their internal state messed with
  * `process.exit` is hacked to wait for streams to finish writing
