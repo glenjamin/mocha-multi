@@ -3,6 +3,9 @@ mocha-multi
 
 A bit of a hack to get multiple reporters working with mocha
 
+[![Build Status](https://travis-ci.org/glenjamin/mocha-multi.png?branch=master)](https://travis-ci.org/glenjamin/mocha-multi)
+[![NPM version](https://badge.fury.io/js/mocha-multi.png)](http://badge.fury.io/js/mocha-multi)
+
 Usage
 -----
 
