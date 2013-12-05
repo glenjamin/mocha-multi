@@ -1,6 +1,6 @@
 {
   "name": "mocha-multi",
-  "version": "0.1.0",
+  "version": "0.1.1-DEV",
   "description": "A bit of a hack to get multiple reporters working with mocha",
   "main": "mocha-multi.js",
   "scripts": {
