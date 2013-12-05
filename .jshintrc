@@ -1,0 +1,6 @@
+{
+  "multistr": true,
+  "asi": true,
+  // for some reason 'mocha:multi' hits this. wtf?
+  "scripturl": true
+}
