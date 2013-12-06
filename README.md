@@ -18,7 +18,9 @@ Choosing Reporters
 Set an environment variable called `multi` to specify the desired reporters.
 Reporters are listed as whitespace separated type=destination pairs.
 
-    multi='dot=- xunit=file.xml doc=docs.html' mocha -R mocha-multi
+```bash
+multi='dot=- xunit=file.xml doc=docs.html' mocha -R mocha-multi
+```
 
 The special value of `-` (hyphen) for destination uses normal stdout/stderr.
 
