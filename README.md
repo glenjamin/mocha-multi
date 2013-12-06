@@ -50,6 +50,8 @@ Could this be a bit less hacky?
 
  * If visionmedia/mocha#1061 is accepted upstream, I only need to hijack stdout, and can leave stderr alone
 
+ * Having each reporter run in a child process would make it eaiser to capture their streams, but might lead to other issues
+
 TODO
 ----
 
