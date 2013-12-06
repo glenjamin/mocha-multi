@@ -4,7 +4,7 @@
   "description": "A bit of a hack to get multiple reporters working with mocha",
   "main": "mocha-multi.js",
   "scripts": {
-    "test": "echo dot=- spec=file.txt doc=file.html xunit=file.xml markdown=file.md | mocha || grep -n '' file.*"
+    "test": "multi='dot=- spec=file.txt doc=file.html xunit=file.xml markdown=file.md' mocha || grep -n '' file.*"
   },
   "repository": {
     "type": "git",

@@ -16,8 +16,9 @@ function MochaMulti(runner) {
 }
 
 var msgs = {
-  no_definitions: "reporter definitions must be passed via stdin\n\
-eg. echo dot=- xunit=file.xml | mocha",
+  no_definitions: "reporter definitions should be set in \
+the `multi` shell variable\n\
+eg. `multi='dot=- xunit=file.xml' mocha`",
   invalid_definition: "'%s' is an invalid definition\n\
 expected <reporter>=<destination>",
   invalid_reporter: "Unable to find '%s' reporter"
@@ -30,23 +31,13 @@ function bombOut(id) {
 }
 
 function parseSetup() {
-  var reporterDefs = readStdin().trim().split(/\s/).filter(identity);
+  var reporterDefinition = process.env.multi || '';
+  var reporterDefs = reporterDefinition.trim().split(/\s/).filter(identity);
   if (!reporterDefs.length) {
     bombOut('no_definitions');
   }
   debug("Got reporter defs: %j", reporterDefs);
   return reporterDefs.map(parseReporter);
-}
-
-function readStdin() {
-  // Hackily read stdin - assume 1k is enough
-  var buffer = new Buffer(1024), bytesRead;
-  try {
-    bytesRead = fs.readSync(process.stdin.fd, buffer, 0, 1024);
-    return buffer.toString('utf8', 0, bytesRead);
-  } catch (err) {
-    return '';
-  }
 }
 
 function parseReporter(definition) {

@@ -15,11 +15,12 @@ Usage
 Choosing Reporters
 ------------------
 
-Nothing in mocha uses stdin, so lets abuse that.
+Set an environment variable called `multi` to specify the desired reporters.
+Reporters are listed as whitespace separated type=destination pairs.
 
-    echo dot=- xunit=file.xml doc=docs.html | mocha -R mocha-multi
+    multi='dot=- xunit=file.xml doc=docs.html' mocha -R mocha-multi
 
-The special value `-` uses normal stdout/stderr
+The special value of `-` (hyphen) for destination uses normal stdout/stderr.
 
 How it works
 ------------
@@ -37,10 +38,18 @@ All the hacks
 
 This is very hacky, specifically:
 
- * Stdin is used to receive arguments, instead of something more sensible
- * Stdin is assumed to be synchronously readable and <1k
  * The `process` and `console` objects get their internal state messed with
  * `process.exit` is hacked to wait for streams to finish writing
+ * Only works if reporters queue writes synchronously in event handlers
+
+Could this be a bit less hacky?
+-------------------------------
+
+ * If mocha#1234 is accepted upstream, then the process.exit hack is no longer
+   needed
+
+ * If mocha#4567 is accepted upstream, I only need to hijack stdout, and can
+   leave stderr alone
 
 TODO
 ----
