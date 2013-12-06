@@ -25,8 +25,7 @@ The special value of `-` (hyphen) for destination uses normal stdout/stderr.
 How it works
 ------------
 
-A big hack that keeps changing the value of process.stdout and process.stderr
-whenever a reporter is doing its thing.
+A big hack that keeps changing the value of process.stdout and process.stderr whenever a reporter is doing its thing.
 
 Seriously?
 ----------
@@ -45,11 +44,9 @@ This is very hacky, specifically:
 Could this be a bit less hacky?
 -------------------------------
 
- * If mocha#1234 is accepted upstream, then the process.exit hack is no longer
-   needed
+ * If visionmedia/mocha#1059 is accepted upstream, then the process.exit hack is no longer needed
 
- * If mocha#4567 is accepted upstream, I only need to hijack stdout, and can
-   leave stderr alone
+ * If visionmedia/mocha#1061 is accepted upstream, I only need to hijack stdout, and can leave stderr alone
 
 TODO
 ----
