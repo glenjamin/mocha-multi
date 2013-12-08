@@ -108,7 +108,11 @@ function createRunnerShim(runner, stream) {
 
   function addDelegate(prop) {
     shim.__defineGetter__(prop, function() {
-      return runner[prop];
+      var property = runner[prop];
+      if (typeof property === 'function') {
+        property = property.bind(runner);
+      }
+      return property;
     });
   }
 
