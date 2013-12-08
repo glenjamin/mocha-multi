@@ -46,7 +46,7 @@ This is very hacky, specifically:
 Could this be a bit less hacky?
 -------------------------------
 
- * If visionmedia/mocha#1059 is accepted upstream, then the process.exit hack is no longer needed
+ * Once a new version of mocha containing visionmedia/mocha#1059 is released then the process.exit hack is no longer needed
 
  * If visionmedia/mocha#1061 is accepted upstream, I only need to hijack stdout, and can leave stderr alone
 
@@ -55,6 +55,5 @@ Could this be a bit less hacky?
 TODO
 ----
 
-Verify the reporter output automatically.
-
-Perhaps use another process to run with/without multi and compare output?
+Add tests for coverage reports
+Add a test which produces all of the reports at once

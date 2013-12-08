@@ -1,0 +1,74 @@
+#!/bin/bash
+
+mocha_multi="../../../mocha-multi.js"
+normal="\033[0m"
+
+function log {
+  local color
+  if [ "$2" = "info" ]; then
+    color="" # normal
+  elif [ "$2" = "fail" ]; then
+    color="\033[01;31m" # red
+  elif [ "$2" = "pass" ]; then
+    color="\033[01;32m" # green
+  else
+    color="\033[01;30m" # grey
+  fi
+  echo -e "${color}VERIFY: $1${normal}" 1>&2
+}
+
+function normalise_timers {
+  local file=$1
+  sed -i'' -e 's/[0-9]*ms/100ms/' $file
+  sed -i'' -e -e 's/0\.[0-9]*/0.042/' $file
+}
+
+function compare {
+  local reporter=$1
+
+  log "Running comparison for $reporter" info
+
+  local builtin_out=$(mktemp -t mocha-multi)
+  local multi_out=$(mktemp -t mocha-multi)
+
+  local builtin_cmd="mocha -R $reporter &> $builtin_out"
+  log "Running formatter normally: $builtin_cmd"
+  eval $builtin_cmd
+  normalise_timers $builtin_out
+
+  # pipe through cat to ensure istty = false
+  local multi_cmd="multi='$reporter=$multi_out' mocha -R $mocha_multi | cat"
+  log "Running formatter via mocha-multi: $multi_cmd"
+  eval $multi_cmd
+  normalise_timers $multi_out
+
+  log "Comparing output"
+  local difference=$(diff -U1 -Lbuiltin -Lmulti $builtin_out $multi_out)
+  if [ "$?" = "1" ]; then
+    log "Output does not match" fail
+    log "Difference\n${normal}$difference"
+  else
+    log 'Output matches, hooray!' pass
+  fi
+}
+
+if [ "$1" = "" ]; then
+  log "No reporter chosen"
+  exit 1
+fi
+
+if [ "$1" = "all" ]; then
+  reporters=(\
+    dot doc spec json progress \
+    list tap landing xunit min \
+    json-stream markdown nyan\
+  )
+  result=0
+  for reporter in ${reporters[@]}; do
+     compare $reporter
+     result=$(($result + $?))
+  done
+  exit $result
+else
+  compare $1
+fi
