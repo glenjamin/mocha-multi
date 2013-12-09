@@ -46,7 +46,7 @@ This is very hacky, specifically:
 Could this be a bit less hacky?
 -------------------------------
 
- * Once a new version of mocha containing visionmedia/mocha#1059 is released then the process.exit hack is no longer needed
+ * Once a new version of mocha containing visionmedia/mocha#1059 is released then the process.exit hack can be a bit tidier
 
  * If visionmedia/mocha#1061 is accepted upstream, I only need to hijack stdout, and can leave stderr alone
 

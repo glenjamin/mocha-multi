@@ -2,9 +2,24 @@ var fs = require('fs');
 var util = require('util');
 var debug = require('debug')('mocha:multi');
 
+// Let mocha decide about tty early
+require('mocha/lib/reporters/base');
+
 module.exports = MochaMulti
 
-// HAAAACK - attempt to trick node into waiting for the streams to finish
+// Make sure we don't lose these!
+var stdout = process.stdout;
+var stderr = process.stderr;
+
+// HAAAACK - force mocha to call our fake process.exit
+var program = require('mocha/node_modules/commander');
+
+var shouldExit = true;
+if (program.name === 'mocha') {
+  shouldExit = program.exit;
+  program.exit = true;
+}
+
 var exit = process.exit;
 process.exit = function(code) {
   var quit = exit.bind(process, code);
@@ -12,7 +27,35 @@ process.exit = function(code) {
 }
 
 function MochaMulti(runner) {
-  initReporters(runner, parseSetup());
+  var streams = initReportersAndStreams(runner, parseSetup());
+  // Remove nulls
+  streams = streams.filter(identity);
+
+  if (!shouldExit) {
+    debug('not hijacking exit')
+    return;
+  }
+
+  // Wait for streams, then exit
+  runner.on('end', function() {
+    debug('Shutting down...')
+
+    var num = streams.length;
+    streams.forEach(function(stream) {
+      stream.end(function() {
+        num -= 1;
+        onClose();
+      });
+    })
+    onClose();
+
+    function onClose() {
+      if (num === 0) {
+        debug('Exiting.');
+        exit()
+      }
+    }
+  })
 }
 
 var msgs = {
@@ -26,8 +69,8 @@ expected <reporter>=<destination>",
 function bombOut(id) {
   var args = Array.prototype.slice.call(arguments, 0);
   args[0] = 'ERROR: ' + msgs[id];
-  console.warn.apply(console, args);
-  process.exit(1);
+  stderr.write(util.format.apply(util, args) + "\n");
+  exit(1);
 }
 
 function parseSetup() {
@@ -48,8 +91,8 @@ function parseReporter(definition) {
   return pair;
 }
 
-function initReporters(runner, setup) {
-  setup.forEach(function(definition) {
+function initReportersAndStreams(runner, setup) {
+  return setup.map(function(definition) {
 
     debug("Initialising reporter '%s' to '%s'", definition[0], definition[1]);
 
@@ -63,6 +106,7 @@ function initReporters(runner, setup) {
       return new Reporter(shim);
     })
 
+    return stream;
   })
 }
 
@@ -84,6 +128,9 @@ function safeRequire(module) {
   try {
     return require(module);
   } catch (err) {
+    if (!/Cannot find/.exec(err.message)) {
+      throw err;
+    }
     return null;
   }
 }
@@ -148,8 +195,6 @@ function withReplacedStdout(stream, func) {
   // The hackiest of hacks
   debug('Replacing stdout');
 
-  var stdout = process.stdout;
-  var stderr = process.stderr;
   var stdoutGetter = Object.getOwnPropertyDescriptor(process, 'stdout').get;
   var stderrGetter = Object.getOwnPropertyDescriptor(process, 'stderr').get;
 
@@ -161,12 +206,11 @@ function withReplacedStdout(stream, func) {
   try {
     func();
   } finally {
-
-    debug('Restoring stdout');
     console._stdout = stdout;
     console._stderr = stderr;
     process.__defineGetter__('stdout', stdoutGetter);
     process.__defineGetter__('stderr', stderrGetter);
+    debug('stdout restored');
   }
 }
 
