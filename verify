@@ -19,7 +19,9 @@ function log {
 
 function normalise_timers {
   local file=$1
-  sed -i '' -e 's/[0-9]*ms/100ms/' -e 's/0\.[0-9]*/0.042/' $file
+  sed -i '' \
+    -e 's/[0-9]/0/g' \
+    $file
 }
 
 function compare {
@@ -42,12 +44,14 @@ function compare {
   normalise_timers $multi_out
 
   log "Comparing output"
-  local difference=$(diff -U1 -Lbuiltin -Lmulti $builtin_out $multi_out)
-  if [ "$?" = "1" ]; then
+  local diff_cmd="diff -U1 -Lbuiltin -Lmulti $builtin_out $multi_out"
+  log "Running $diff_cmd"
+  local difference=$($diff_cmd)
+  if [ "$difference" = "" ]; then
+    log 'Output matches, hooray!' pass
+  else
     log "Output does not match" fail
     log "Difference\n${normal}$difference"
-  else
-    log 'Output matches, hooray!' pass
   fi
 
   rm "$builtin_out" "$multi_out"
