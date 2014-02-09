@@ -46,7 +46,7 @@ This is very hacky, specifically:
 Could this be a bit less hacky?
 -------------------------------
 
- * Once a new version of mocha containing visionmedia/mocha#1059 is released then the process.exit hack can be a bit tidier
+ * Now that visionmedia/mocha#1059 is released the process.exit hack could be tidier
 
  * If visionmedia/mocha#1061 is accepted upstream, I only need to hijack stdout, and can leave stderr alone
 
@@ -55,5 +55,9 @@ Could this be a bit less hacky?
 TODO
 ----
 
-Add tests for coverage reports
-Add a test which produces all of the reports at once
+* Update hack now that visionmedia/mocha#1059 is merged
+* Add tests for coverage reports
+* Add tests which produce multiple reports at once
+* Add test for help text
+* Add test that uses --no-exit
+* Add test that doesn't use _mocha (maybe not?)
