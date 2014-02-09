@@ -11,15 +11,24 @@ module.exports = MochaMulti
 var stdout = process.stdout;
 var stderr = process.stderr;
 
-// HAAAACK - force mocha to call our fake process.exit
-var program = require('mocha/node_modules/commander');
+// Should we hijack process.exit to wait for streams to close?
+var shouldExit = false;
 
-var shouldExit = true;
-if (program.name === 'mocha') {
-  shouldExit = program.exit;
-  program.exit = true;
-}
+// HAAAACK
+// if mocha is being run as commandline program
+// force mocha to call our fake process.exit
+//
+// This has to happen on require to be early
+// enough to affect the code in _mocha
+try {
+  var program = require('mocha/node_modules/commander');
+  if (program.name == 'mocha' && ('exit' in program)) {
+    shouldExit = program.exit;
+    program.exit = true;
+  }
+} catch (ex) {}
 
+// Capture the exit code and preserve it
 var exit = process.exit;
 process.exit = function(code) {
   var quit = exit.bind(process, code);
