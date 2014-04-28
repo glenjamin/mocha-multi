@@ -19,7 +19,7 @@ function log {
 
 function normalise_timers {
   local file=$1
-  cmd="sed -i'.bak' -e 's/[0-9]\{1,\}/0/g' '$file'"
+  cmd="sed -i'.bak' -e 's/[0-9]\{1,\}\(\.[0-9]\{1,\}\)\{0,1\}/0/g' '$file'"
   eval $cmd
   rm "$file.bak"
 }
