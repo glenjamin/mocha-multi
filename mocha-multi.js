@@ -55,13 +55,15 @@ function MochaMulti(runner) {
         num -= 1;
         onClose();
       });
-    })
+    });
     onClose();
 
     function onClose() {
       if (num === 0) {
-        debug('Exiting.');
-        exit()
+        if (! program.watch) {
+          debug('Exiting.');
+          exit();
+        }
       }
     }
   })
