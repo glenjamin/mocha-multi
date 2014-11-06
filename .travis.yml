@@ -2,8 +2,12 @@ language: node_js
 node_js:
   - "0.10"
   - "0.11"
-
 env:
   - MOCHA=1
   - MOCHA=2
+matrix:
+  exclude:
+    - node_js: "0.11"
+      env: MOCHA=1
+
 before_script: npm install mocha@$MOCHA
