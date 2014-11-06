@@ -26,6 +26,6 @@
     "debug": "~0.7.4"
   },
   "peerDependencies": {
-    "mocha": ">=1.15.1 <2.0.0"
+    "mocha": ">=1.15.1"
   }
 }
