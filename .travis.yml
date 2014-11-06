@@ -1,4 +1,9 @@
 language: node_js
 node_js:
-  - 0.10
-  - 0.11
+  - "0.10"
+  - "0.11"
+
+env:
+  - MOCHA=1
+  - MOCHA=2
+before_script: npm install mocha@$MOCHA
