@@ -20,7 +20,7 @@
   },
   "homepage": "https://github.com/glenjamin/mocha-multi",
   "devDependencies": {
-    "mocha": ">=1.15.1 <2.0.0"
+    "mocha": ">=1.15.1"
   },
   "dependencies": {
     "debug": "~0.7.4"
