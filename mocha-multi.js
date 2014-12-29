@@ -114,7 +114,7 @@ function initReportersAndStreams(runner, setup) {
 
     withReplacedStdout(stream, function() {
       var Reporter = resolveReporter(definition[0]);
-      return new Reporter(shim);
+      return new Reporter(shim, {});
     })
 
     return stream;
