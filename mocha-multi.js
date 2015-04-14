@@ -35,8 +35,18 @@ process.exit = function(code) {
   process.on('exit', quit);
 }
 
-function MochaMulti(runner) {
-  var streams = initReportersAndStreams(runner, parseSetup());
+function MochaMulti(runner, options) {
+  var setup=[];
+  if( options && options.reporterOptions ) {
+    debug("options %j", options.reporterOptions);
+    var reporters=Object.keys(options.reporterOptions);
+    reporters.forEach(function(reporter) {
+      debug("%j %j", options.reporterOptions, reporter);
+      setup.push([ reporter, options.reporterOptions[reporter].stdout, options.reporterOptions[reporter].options ]);
+    });
+  }
+  debug("setup %j", setup);
+  var streams = initReportersAndStreams(runner, setup || parseSetup());
   // Remove nulls
   streams = streams.filter(identity);
 
@@ -104,17 +114,18 @@ function parseReporter(definition) {
 
 function initReportersAndStreams(runner, setup) {
   return setup.map(function(definition) {
+    var reporter=definition[0], outstream=definition[1], options=definition[2]
 
-    debug("Initialising reporter '%s' to '%s'", definition[0], definition[1]);
+    debug("Initialising reporter '%s' to '%s' with options %j", reporter, outstream, options);
 
-    var stream = resolveStream(definition[1]);
+    var stream = resolveStream(outstream);
     var shim = createRunnerShim(runner, stream);
 
-    debug("Shimming runner into reporter '%s'", definition[0]);
+    debug("Shimming runner into reporter '%s' %j", reporter, options);
 
     withReplacedStdout(stream, function() {
-      var Reporter = resolveReporter(definition[0]);
-      return new Reporter(shim, {});
+      var Reporter = resolveReporter(reporter);
+      return new Reporter(shim, options || {});
     })
 
     return stream;
