@@ -8,12 +8,12 @@ var reporters=[
     "dot", "doc", "spec", "json", "progress",
     "list", "tap", "landing", "xunit", "min",
     "json-stream", "markdown", "nyan"
-], deferreds=[];
+], deferreds=[], now=new Date();
 
 reporters.forEach(function(r) {
     var reporter=r, reporterOptions={}, deferred;
     reporterOptions[reporter]={ 
-        stdout:"/tmp/spec."+reporter+".out"
+        stdout:"/tmp/mocha-multi."+reporter+"."+now
     };
     deferred=Q.defer();
     deferreds.push( deferred.promise );
@@ -30,7 +30,7 @@ reporters.forEach(function(r) {
 Q.all(deferreds).then(function() {
     process.on('exit', function onExit() {
         reporters.forEach(function(reporter) {
-            fs.statSync("/tmp/spec."+reporter+".out").should.be.ok;            
+            fs.statSync("/tmp/mocha-multi."+reporter+"."+now).should.be.ok;            
         });
     });
 });
