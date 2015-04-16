@@ -36,17 +36,20 @@ process.exit = function(code) {
 }
 
 function MochaMulti(runner, options) {
-  var setup=[];
-  if( options && options.reporterOptions ) {
-    debug("options %j", options.reporterOptions);
+  var setup;
+  if( Object.keys(options.reporterOptions).length > 0 ) {
+    debug("options %j %j", options, options.reporterOptions);
+    setup=[];
     var reporters=Object.keys(options.reporterOptions);
     reporters.forEach(function(reporter) {
-      debug("%j %j", options.reporterOptions, reporter);
+      debug("adding reporter %j %j", options.reporterOptions, reporter);
       setup.push([ reporter, options.reporterOptions[reporter].stdout, options.reporterOptions[reporter].options ]);
     });
+  } else {
+    setup=parseSetup();
   }
   debug("setup %j", setup);
-  var streams = initReportersAndStreams(runner, setup || parseSetup());
+  var streams = initReportersAndStreams(runner, setup);
   // Remove nulls
   streams = streams.filter(identity);
 
