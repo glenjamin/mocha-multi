@@ -10,6 +10,8 @@ var reporters=[
     "json-stream", "markdown", "nyan"
 ], deferreds=[], now=new Date();
 
+should(process.env['multi']).not.be.ok;
+
 reporters.forEach(function(r) {
     var reporter=r, reporterOptions={}, deferred;
     reporterOptions[reporter]={ 
@@ -30,7 +32,8 @@ reporters.forEach(function(r) {
 Q.all(deferreds).then(function() {
     process.on('exit', function onExit() {
         reporters.forEach(function(reporter) {
-            fs.statSync("/tmp/mocha-multi."+reporter+"."+now).should.be.ok;            
+            fs.statSync("/tmp/mocha-multi."+reporter+"."+now).should.be.ok;
+            fs.unlinkSync("/tmp/mocha-multi."+reporter+"."+now);
         });
     });
 });
