@@ -37,7 +37,7 @@ process.exit = function(code) {
 
 function MochaMulti(runner, options) {
   var setup;
-  if( options && Object.keys(options.reporterOptions).length > 0 ) {
+  if( options && options.reporterOptions && Object.keys(options.reporterOptions).length > 0 ) {
     debug("options %j %j", options, options.reporterOptions);
     setup=[];
     var reporters=Object.keys(options.reporterOptions);
