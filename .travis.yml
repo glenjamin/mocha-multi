@@ -3,8 +3,3 @@ node_js:
   - "0.10"
   - "0.12"
   - "iojs"
-env:
-  - MOCHA=1
-  - MOCHA=2
-
-before_script: npm install mocha@$MOCHA
