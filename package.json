@@ -4,7 +4,7 @@
   "description": "A bit of a hack to get multiple reporters working with mocha",
   "main": "mocha-multi.js",
   "scripts": {
-    "test": "./verify all"
+    "test": "./verify all && node verify.js"
   },
   "repository": {
     "type": "git",
@@ -21,7 +21,8 @@
   "homepage": "https://github.com/glenjamin/mocha-multi",
   "devDependencies": {
     "async": "^0.9.0",
-    "mocha": "^2.2.4",
+    "chalk": "^1.0.0",
+    "mocha": ">=1.15.1 <3.0.0",
     "q": "^1.2.0",
     "should": "^5.2.0"
   },

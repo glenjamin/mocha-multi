@@ -1,37 +1,45 @@
-var Mocha = require('mocha'), 
+var Mocha = require('mocha'),
     should=require('should'),
     fs=require('fs'),
-    debug = require('debug')('mocha:multi'),
-    async = require('async');
+    debug = require('debug')('mocha:verify:multi'),
+    async = require('async'),
+    chalk = require('chalk');
 
-var reporters=[
+var reporters = [
     "dot", "doc", "spec", "json", "progress",
     "list", "tap", "landing", "xunit", "min",
     "json-stream", "markdown", "nyan"
-], deferreds=[], now=new Date();
+], deferreds = [], now = new Date();
 
-should(process.env['multi']).not.be.ok;
+should(process.env.multi).not.be.ok;
 
-async.eachSeries(reporters, function(r, next) {
-    var reporter=r, reporterOptions={}, deferred;
+function tempName(reporter) {
+    return "/tmp/mocha-multi." + reporter + "." + (+now);
+}
+
+process.setMaxListeners(reporters.length);
+
+async.eachSeries(reporters, function(reporter, next) {
+    var reporterOptions = {};
     debug("reporter %s", reporter);
-    reporterOptions[reporter]={ 
-        stdout:"/tmp/mocha-multi."+reporter+"."+now
+    reporterOptions[reporter] = {
+        stdout: tempName(reporter)
     };
     debug("reporterOptions %j", reporterOptions);
     var mocha = new Mocha({
         ui: 'bdd',
         reporter: "mocha-multi",
-        reporterOptions:reporterOptions
+        reporterOptions: reporterOptions
     });
     mocha.addFile("test/dummy-spec.js");
     mocha.run(function onRun(failures){
         debug("done running %j", reporter);
-        next();
+        process.nextTick(next);
     });
 }, function(err, results) {
     reporters.forEach(function(reporter) {
-        (function(){fs.statSync("/tmp/mocha-multi."+reporter+"."+now);}).should.not.throw();
-        fs.unlinkSync("/tmp/mocha-multi."+reporter+"."+now);
+        fs.statSync.bind(fs, tempName(reporter)).should.not.throw();
+        fs.unlinkSync(tempName(reporter));
+        console.log(chalk.green("%s OK"), reporter);
     });
 });
