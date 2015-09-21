@@ -11,30 +11,6 @@ module.exports = MochaMulti
 var stdout = process.stdout;
 var stderr = process.stderr;
 
-// Should we hijack process.exit to wait for streams to close?
-var shouldExit = false;
-
-// HAAAACK
-// if mocha is being run as commandline program
-// force mocha to call our fake process.exit
-//
-// This has to happen on require to be early
-// enough to affect the code in _mocha
-try {
-  var program = require('mocha/node_modules/commander');
-  if (program.name == 'mocha' && ('exit' in program)) {
-    shouldExit = program.exit;
-    program.exit = true;
-  }
-} catch (ex) {}
-
-// Capture the exit code and preserve it
-var exit = process.exit;
-process.exit = function(code) {
-  var quit = exit.bind(process, code);
-  process.on('exit', quit);
-}
-
 function MochaMulti(runner, options) {
   var setup;
   var reporters = (options && options.reporterOptions);
@@ -53,33 +29,10 @@ function MochaMulti(runner, options) {
   // Remove nulls
   streams = streams.filter(identity);
 
-  if (!shouldExit) {
-    debug('not hijacking exit')
-    return;
+  //we actually need to wait streams only if they are present
+  if(streams.length > 0) {
+    awaitStreamsOnExit(streams);
   }
-
-  // Wait for streams, then exit
-  runner.on('end', function() {
-    debug('Shutting down...')
-
-    var num = streams.length;
-    streams.forEach(function(stream) {
-      stream.end(function() {
-        num -= 1;
-        onClose();
-      });
-    });
-    onClose();
-
-    function onClose() {
-      if (num === 0) {
-        if (! program.watch) {
-          debug('Exiting.');
-          exit();
-        }
-      }
-    }
-  })
 }
 
 var msgs = {
@@ -94,7 +47,7 @@ function bombOut(id) {
   var args = Array.prototype.slice.call(arguments, 0);
   args[0] = 'ERROR: ' + msgs[id];
   stderr.write(util.format.apply(util, args) + "\n");
-  exit(1);
+  process.exit(1);
 }
 
 function parseSetup() {
@@ -133,6 +86,25 @@ function initReportersAndStreams(runner, setup) {
 
     return stream;
   })
+}
+
+function awaitStreamsOnExit(streams) {
+  var exit = process.exit;
+  var num = streams.length;
+  process.exit = function(code) {
+    var quit = exit.bind(process, code);
+    streams.forEach(function(stream) {
+      stream.end(function() {
+        num--;
+        onClose();
+      });
+    });
+    function onClose() {
+      if(num === 0) {
+        quit();
+      }
+    }
+  };
 }
 
 function resolveReporter(name) {
