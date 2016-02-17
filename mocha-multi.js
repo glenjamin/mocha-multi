@@ -1,6 +1,7 @@
 var fs = require('fs');
 var util = require('util');
 var debug = require('debug')('mocha:multi');
+var path = require('path');
 
 // Let mocha decide about tty early
 require('mocha/lib/reporters/base');
@@ -138,6 +139,12 @@ function resolveStream(destination) {
     return null;
   }
   debug("Resolved stream '%s' into writeable file stream", destination);
+  // Create directory if not existing
+  var destinationDir = path.dirname(destination);
+  if (!fs.existsSync(destinationDir)){
+    fs.mkdirSync(destinationDir);
+  }
+
   // Ensure we can write here
   fs.writeFileSync(destination, '');
   return fs.createWriteStream(destination);
