@@ -15,6 +15,10 @@ Usage
 Choosing Reporters
 ------------------
 
+For both methods below, the special value of `-` (hyphen) for destination uses normal stdout/stderr.
+
+### With the `multi` Environment Variable
+
 Set an environment variable called `multi` to specify the desired reporters.
 Reporters are listed as whitespace separated type=destination pairs.
 
@@ -22,7 +26,13 @@ Reporters are listed as whitespace separated type=destination pairs.
 multi='dot=- xunit=file.xml doc=docs.html' mocha -R mocha-multi
 ```
 
-The special value of `-` (hyphen) for destination uses normal stdout/stderr.
+### With `--reporter-options`
+
+Pass `--reporter-options` with comma-separated type=destination pairs.
+
+```bash
+mocha -R mocha-multi --reporter-options dot=-,xunit=file.xml,doc=docs.html
+```
 
 Using mocha-multi programmatically
 ----------------------------------
@@ -32,8 +42,8 @@ Specify the desired reporters (and their options) by passing reporterOptions to 
 for example: this is the equivalent of multi='spec=- Progress=/tmp/mocha-multi.Progress.out', with the addition of passing the verbose:true option to the Progress reporter
 ```sh
 var reporterOptions={
-	Progress:{ 
-		stdout:"/tmp/mocha-multi.Progress.out",
+	Progress: {
+		stdout: "/tmp/mocha-multi.Progress.out",
 		options: {
 			verbose: true
 		}
