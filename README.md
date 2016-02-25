@@ -43,14 +43,12 @@ For example: the following config is the equivalent of setting `multi='spec=- Pr
 ```sh
 var reporterOptions = {
 	Progress: {
-		stdout:"/tmp/mocha-multi.Progress.out",
+		stdout: "/tmp/mocha-multi.Progress.out",
 		options: {
 			verbose: true
 		}
 	},
-	spec: {
-		stdout:"-"
-	}
+	spec: "-"
 };
 
 var mocha = new Mocha({
