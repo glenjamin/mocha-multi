@@ -19,8 +19,7 @@ For both methods below, the special value of `-` (hyphen) for destination uses n
 
 ### With the `multi` Environment Variable
 
-Set an environment variable called `multi` to specify the desired reporters.
-Reporters are listed as whitespace separated type=destination pairs.
+Set the environment variable `multi` to whitespace-separated type=destination pairs.
 
 ```bash
 multi='dot=- xunit=file.xml doc=docs.html' mocha -R mocha-multi
@@ -37,13 +36,14 @@ mocha -R mocha-multi --reporter-options dot=-,xunit=file.xml,doc=docs.html
 Using mocha-multi programmatically
 ----------------------------------
 
-Specify the desired reporters (and their options) by passing reporterOptions to the Mocha contructor
+You may specify the desired reporters (and their options) by passing `reporterOptions` to the Mocha contructor.
 
-for example: this is the equivalent of multi='spec=- Progress=/tmp/mocha-multi.Progress.out', with the addition of passing the verbose:true option to the Progress reporter
+For example: the following config is the equivalent of setting `multi='spec=- Progress=/tmp/mocha-multi.Progress.out'`, with the addition of passing the `verbose: true` option to the Progress reporter.
+
 ```sh
-var reporterOptions={
+var reporterOptions = {
 	Progress: {
-		stdout: "/tmp/mocha-multi.Progress.out",
+		stdout:"/tmp/mocha-multi.Progress.out",
 		options: {
 			verbose: true
 		}
@@ -54,16 +54,17 @@ var reporterOptions={
 };
 
 var mocha = new Mocha({
-    ui: 'bdd',
+    ui: "bdd"
     reporter: "mocha-multi",
-    reporterOptions:reporterOptions
+    reporterOptions: reporterOptions
 });
 mocha.addFile("test/dummy-spec.js");
 mocha.run(function onRun(failures){
     console.log(failures);
 });
 ```
-The options will be passed as the second argument to the reporter constructor
+
+The options will be passed as the second argument to the reporter constructor.
 
 How it works
 ------------
