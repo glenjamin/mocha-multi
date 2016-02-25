@@ -27,7 +27,8 @@
     "should": "^5.2.0"
   },
   "dependencies": {
-    "debug": "~0.7.4"
+    "debug": "~0.7.4",
+    "is-string": "^1.0.4"
   },
   "peerDependencies": {
     "mocha": ">=2 <3.0.0"
