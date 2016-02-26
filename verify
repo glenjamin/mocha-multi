@@ -30,7 +30,8 @@ function compare {
   log "Running comparison for $reporter" info
 
   local builtin_out=$(mktemp /tmp/mocha-multi.XXXXXXXXX)
-  local multi_out=$(mktemp /tmp/mocha-multi.XXXXXXXXX)
+  local multi_env_out=$(mktemp /tmp/mocha-multi.XXXXXXXXX)
+  local multi_arg_out=$(mktemp /tmp/mocha-multi.XXXXXXXXX)
 
   local builtin_cmd="mocha -R $reporter &> $builtin_out"
   log "Running formatter normally: $builtin_cmd"
@@ -38,24 +39,35 @@ function compare {
   normalise_timers $builtin_out
 
   # pipe through cat to ensure istty = false
-  local multi_cmd="multi='$reporter=$multi_out' mocha -R $mocha_multi | cat"
-  log "Running formatter via mocha-multi: $multi_cmd"
-  eval $multi_cmd
-  normalise_timers $multi_out
+  local multi_cmd_env="multi='$reporter=$multi_env_out' mocha -R $mocha_multi | cat"
+  log "Running formatter via mocha-multi using environment variable: $multi_cmd_env"
+  eval $multi_cmd_env
+  normalise_timers $multi_env_out
+
+  local multi_arg_env="mocha -R $mocha_multi --reporter-options '$reporter=$multi_arg_out' | cat"
+  log "Running formatter via mocha-multi using --reporter-options: $multi_arg_env"
+  eval $multi_arg_env
+  normalise_timers $multi_arg_out
 
   log "Comparing output"
-  local diff_cmd="diff -U1 -Lbuiltin -Lmulti $builtin_out $multi_out"
-  log "Running $diff_cmd"
-  local difference=$($diff_cmd)
 
-  rm "$builtin_out" "$multi_out"
+  local diff_cmd_env="diff -U1 -Lbuiltin -Lmulti $builtin_out $multi_env_out"
+  log "Running $diff_cmd_env"
+  local difference_env=$($diff_cmd_env)
 
-  if [ "$difference" = "" ]; then
+  local diff_cmd_arg="diff -U1 -Lbuiltin -Lmulti $builtin_out $multi_arg_out"
+  log "Running $diff_cmd_arg"
+  local difference_arg=$($diff_cmd_arg)
+
+  rm "$builtin_out" "$multi_env_out" "$multi_arg_out"
+
+  if [ "$difference_env" = "" -a "$difference_arg" = "" ]; then
     log 'Output matches, hooray!' pass
     return 0
   else
     log "Output does not match" fail
-    log "Difference\n${normal}$difference"
+    log "Difference (env)\n${normal}$difference_env"
+    log "Difference (arg)\n${normal}$difference_arg"
     return 1
   fi
 }
