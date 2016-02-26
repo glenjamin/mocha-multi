@@ -2,6 +2,7 @@ var fs = require('fs');
 var util = require('util');
 var debug = require('debug')('mocha:multi');
 var path = require('path');
+var isString = require('is-string');
 
 // Let mocha decide about tty early
 require('mocha/lib/reporters/base');
@@ -20,7 +21,18 @@ function MochaMulti(runner, options) {
     setup = [];
     Object.keys(reporters).forEach(function(reporter) {
       debug("adding reporter %j %j", reporter, reporters[reporter]);
-      setup.push([ reporter, reporters[reporter].stdout, reporters[reporter].options ]);
+
+      var stdout;
+      var options;
+      if (isString(reporters[reporter])) {
+        stdout = reporters[reporter];
+        options = null;
+      } else {
+        stdout = reporters[reporter].stdout;
+        options = reporters[reporter].options;
+      }
+
+      setup.push([ reporter, stdout, options ]);
     });
   } else {
     setup = parseSetup();
