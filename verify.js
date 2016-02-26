@@ -9,9 +9,7 @@ var reporters = [
     "dot", "doc", "spec", "json", "progress",
     "list", "tap", "landing", "xunit", "min",
     "json-stream", "markdown", "nyan"
-];
-
-var now = new Date();
+], now = new Date();
 
 var reportersWithOptions = []
     .concat(reporters.map(function (reporter) {
