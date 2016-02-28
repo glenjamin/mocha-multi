@@ -3,6 +3,7 @@ var util = require('util');
 var debug = require('debug')('mocha:multi');
 var path = require('path');
 var isString = require('is-string');
+var mkdirp = require('mkdirp');
 
 // Let mocha decide about tty early
 require('mocha/lib/reporters/base');
@@ -154,7 +155,7 @@ function resolveStream(destination) {
   // Create directory if not existing
   var destinationDir = path.dirname(destination);
   if (!fs.existsSync(destinationDir)){
-    fs.mkdirSync(destinationDir);
+    mkdirp.sync(destinationDir);
   }
 
   // Ensure we can write here

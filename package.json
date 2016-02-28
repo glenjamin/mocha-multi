@@ -28,7 +28,8 @@
   },
   "dependencies": {
     "debug": "~0.7.4",
-    "is-string": "^1.0.4"
+    "is-string": "^1.0.4",
+    "mkdirp": "^0.5.1"
   },
   "peerDependencies": {
     "mocha": ">=2 <3.0.0"
