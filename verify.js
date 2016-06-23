@@ -8,7 +8,7 @@ var Mocha = require('mocha'),
 var reporters = [
     "dot", "doc", "spec", "json", "progress",
     "list", "tap", "landing", "xunit", "min",
-    "json-stream", "markdown", "nyan"
+    "json-stream", "markdown", "nyan", "mocha-junit-reporter"
 ], now = new Date();
 
 var reportersWithOptions = []

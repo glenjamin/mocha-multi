@@ -81,7 +81,8 @@ if [ "$1" = "all" ]; then
   reporters=(\
     dot doc spec json progress \
     list tap landing xunit min \
-    json-stream markdown nyan\
+    json-stream markdown nyan \
+    mocha-junit-reporter\
   )
   result=0
   for reporter in ${reporters[@]}; do
