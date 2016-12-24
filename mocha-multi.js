@@ -8,8 +8,6 @@ var mkdirp = require('mkdirp');
 // Let mocha decide about tty early
 require('mocha/lib/reporters/base');
 
-var Base = require('mocha').reporters.Base;
-
 module.exports = MochaMulti
 
 // Make sure we don't lose these!
@@ -52,8 +50,6 @@ function MochaMulti(runner, options) {
     awaitStreamsOnExit(streams);
   }
 }
-
-util.inherits(MochaMulti, Base);
 
 /**
  * Override done to allow done processing for any reporters that have a done method.
