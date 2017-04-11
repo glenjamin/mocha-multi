@@ -1,5 +1,6 @@
 var fs = require('fs');
 var util = require('util');
+var assign = require('object-assign');
 var debug = require('debug')('mocha:multi');
 var path = require('path');
 var isString = require('is-string');
@@ -16,6 +17,7 @@ var stderr = process.stderr;
 
 function MochaMulti(runner, options) {
   var setup;
+  this.options = options;
   // keep track of reporters that have a done method.
   this.reportersWithDone = [];
   var reporters = (options && options.reporterOptions);
@@ -124,7 +126,9 @@ function initReportersAndStreams(runner, setup, multi) {
 
     withReplacedStdout(stream, function() {
       var Reporter = resolveReporter(reporter);
-      var r = new Reporter(shim, options || {});
+      var r = new Reporter(shim, assign({}, multi.options, {
+        reporterOptions: options || {}
+      }));
       // If the reporter possess a done() method register it so we can
       // wait for it to complete when done.
       if(r && r.done) {

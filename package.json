@@ -29,7 +29,8 @@
   "dependencies": {
     "debug": "~0.7.4",
     "is-string": "^1.0.4",
-    "mkdirp": "^0.5.1"
+    "mkdirp": "^0.5.1",
+    "object-assign": "^4.1.1"
   },
   "peerDependencies": {
     "mocha": ">=2 <4.0.0"
