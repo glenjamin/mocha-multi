@@ -53,11 +53,11 @@ async.eachSeries(reportersWithOptions, function(reporter, next) {
         reporterOptions: reporter.options
     });
     mocha.addFile("test/dummy-spec.js");
-    mocha.run(function onRun(failures){
+    mocha.run(function onRun(){
         debug("done running %j", reporter.testName);
         process.nextTick(next);
     });
-}, function(err, results) {
+}, function() {
     reportersWithOptions.forEach(function(reporter) {
         fs.statSync.bind(fs, reporter.outFilename).should.not.throw();
         fs.unlinkSync(reporter.outFilename);

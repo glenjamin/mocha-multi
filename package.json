@@ -4,7 +4,10 @@
   "description": "A bit of a hack to get multiple reporters working with mocha",
   "main": "mocha-multi.js",
   "scripts": {
-    "test": "./verify all && node verify.js"
+    "test": "run-p -c lint verify:*",
+    "verify:sh": "./verify all",
+    "verify:node": "node ./verify.js",
+    "lint": "eslint ."
   },
   "repository": {
     "type": "git",
@@ -22,7 +25,10 @@
   "devDependencies": {
     "async": "^2.5.0",
     "chalk": "^2.1.0",
+    "eslint": "^4.8.0",
+    "eslint-plugin-node": "^5.2.0",
     "mocha": ">=2 <5.0.0",
+    "npm-run-all": "^4.1.1",
     "q": "^1.2.0",
     "should": "^13.1.0"
   },
@@ -34,5 +40,8 @@
   },
   "peerDependencies": {
     "mocha": ">=2 <5.0.0"
+  },
+  "engines": {
+    "node": ">=6.0.0"
   }
 }
