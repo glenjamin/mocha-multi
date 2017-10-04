@@ -86,16 +86,16 @@ This is very hacky, specifically:
 Could this be a bit less hacky?
 -------------------------------
 
- * Now that visionmedia/mocha#1059 is released the process.exit hack could be tidier
+ * Now that https://github.com/mochajs/mocha/pull/1059 is released the process.exit hack could be tidier
 
- * Now that visionmedia/mocha#1061 is released, I only need to hijack stdout, and can leave stderr alone
+ * Now that https://github.com/mochajs/mocha/pull/1061 is released, I only need to hijack stdout, and can leave stderr alone
 
  * Having each reporter run in a child process would make it eaiser to capture their streams, but might lead to other issues
 
 TODO
 ----
 
-* Update hack now that visionmedia/mocha#1059 is merged
+* Update hack now that https://github.com/mochajs/mocha/pull/1059 is merged
 * Add tests for coverage reports
 * Add tests which produce multiple reports at once
 * Add test for help text
