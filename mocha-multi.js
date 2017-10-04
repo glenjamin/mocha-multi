@@ -12,8 +12,7 @@ require('mocha/lib/reporters/base');
 module.exports = MochaMulti;
 
 // Make sure we don't lose these!
-const stdout = process.stdout;
-const stderr = process.stderr;
+const { stdout, stderr } = process;
 
 function MochaMulti(runner, options) {
   let setup;
@@ -23,21 +22,15 @@ function MochaMulti(runner, options) {
   const reporters = (options && options.reporterOptions);
   if (reporters && Object.keys(reporters).length > 0) {
     debug('options %j', options);
-    setup = [];
-    Object.keys(reporters).forEach((reporter) => {
+    setup = Object.keys(reporters).map((reporter) => {
       debug('adding reporter %j %j', reporter, reporters[reporter]);
+      const r = reporters[reporter];
 
-      let stdout;
-      let options;
-      if (isString(reporters[reporter])) {
-        stdout = reporters[reporter];
-        options = null;
-      } else {
-        stdout = reporters[reporter].stdout;
-        options = reporters[reporter].options;
+      if (isString(r)) {
+        return [reporter, r, null];
       }
 
-      setup.push([reporter, stdout, options]);
+      return [reporter, r.stdout, r.options];
     });
   } else {
     setup = parseSetup();
@@ -62,7 +55,7 @@ MochaMulti.prototype.done = function (failures, fn) {
   if (self.reportersWithDone.length !== 0) {
     let count = self.reportersWithDone.length;
     debug('Awaiting on %j reporters to invoke done callback.', count);
-    const cb = function () {
+    const cb = () => {
       if (--count === 0) {
         debug('All reporters invoked done callback.');
         fn(failures);
@@ -115,9 +108,9 @@ function parseReporter(definition) {
 
 function initReportersAndStreams(runner, setup, multi) {
   return setup.map((definition) => {
-    let reporter = definition[0],
-      outstream = definition[1],
-      options = definition[2];
+    const reporter = definition[0];
+    const outstream = definition[1];
+    const options = definition[2];
 
     debug("Initialising reporter '%s' to '%s' with options %j", reporter, outstream, options);
 
@@ -144,9 +137,9 @@ function initReportersAndStreams(runner, setup, multi) {
 }
 
 function awaitStreamsOnExit(streams) {
-  const exit = process.exit;
+  const { exit } = process;
   let num = streams.length;
-  process.exit = function (code) {
+  process.exit = (code) => {
     const quit = exit.bind(process, code);
     streams.forEach((stream) => {
       stream.end(() => {
@@ -229,8 +222,7 @@ function createRunnerShim(runner, stream) {
     delegatedEvents[event] = true;
     debug("Shim: Delegating '%s'", event);
 
-    runner.on(event, function () {
-      const eventArgs = Array.prototype.slice.call(arguments, 0);
+    runner.on(event, (...eventArgs) => {
       eventArgs.unshift(event);
 
       withReplacedStdout(stream, () => {

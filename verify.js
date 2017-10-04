@@ -1,16 +1,16 @@
-let Mocha = require('mocha'),
-  should = require('should'),
-  fs = require('fs'),
-  debug = require('debug')('mocha:verify:multi'),
-  async = require('async'),
-  chalk = require('chalk');
+const Mocha = require('mocha');
+const should = require('should');
+const fs = require('fs');
+const debug = require('debug')('mocha:verify:multi');
+const async = require('async');
+const chalk = require('chalk');
 
-let reporters = [
-    'dot', 'doc', 'spec', 'json', 'progress',
-    'list', 'tap', 'landing', 'xunit', 'min',
-    'json-stream', 'markdown', 'nyan',
-  ],
-  now = new Date();
+const reporters = [
+  'dot', 'doc', 'spec', 'json', 'progress',
+  'list', 'tap', 'landing', 'xunit', 'min',
+  'json-stream', 'markdown', 'nyan',
+];
+const now = new Date();
 
 const reportersWithOptions = []
   .concat(reporters.map((reporter) => {
