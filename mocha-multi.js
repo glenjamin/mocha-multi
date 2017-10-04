@@ -82,10 +82,9 @@ const msgs = {
                       'expected <reporter>=<destination>',
   invalid_reporter: "Unable to find '%s' reporter",
 };
-function bombOut(id) {
-  const args = Array.prototype.slice.call(arguments, 0);
-  args[0] = `ERROR: ${msgs[id]}`;
-  stderr.write(`${util.format(...args)}\n`);
+function bombOut(id, ...args) {
+  const newArgs = [`ERROR: ${msgs[id]}`, ...args];
+  stderr.write(`${util.format(...newArgs)}\n`);
   process.exit(1);
 }
 

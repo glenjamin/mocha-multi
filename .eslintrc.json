@@ -11,8 +11,7 @@
         "no-underscore-dangle": 0,
         "no-unused-expressions": 0,
         "no-use-before-define": 0,
-        "node/no-unpublished-require": 0,
-        "prefer-rest-params": 0
+        "node/no-unpublished-require": 0
     },
     "overrides": [
         {
