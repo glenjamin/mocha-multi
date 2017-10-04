@@ -6,7 +6,6 @@
         "import/no-dynamic-require": 0,
         "import/no-extraneous-dependencies": 0,
         "no-process-exit": 0,
-        "no-restricted-properties": 0,
         "no-underscore-dangle": 0,
         "no-unused-expressions": 0,
         "no-use-before-define": 0,

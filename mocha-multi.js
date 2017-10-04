@@ -14,6 +14,10 @@ module.exports = MochaMulti;
 // Make sure we don't lose these!
 const { stdout, stderr } = process;
 
+function defineGetter(obj, prop, get) {
+  Object.defineProperty(obj, prop, { get });
+}
+
 function MochaMulti(runner, options) {
   let setup;
   this.options = options;
@@ -205,7 +209,7 @@ function createRunnerShim(runner, stream) {
   addDelegate('total');
 
   function addDelegate(prop) {
-    shim.__defineGetter__(prop, () => {
+    defineGetter(shim, prop, () => {
       let property = runner[prop];
       if (typeof property === 'function') {
         property = property.bind(runner);
@@ -248,16 +252,16 @@ function withReplacedStdout(stream, func) {
 
   console._stdout = stream;
   console._stderr = stream;
-  process.__defineGetter__('stdout', () => stream);
-  process.__defineGetter__('stderr', () => stream);
+  defineGetter(process, 'stdout', () => stream);
+  defineGetter(process, 'stderr', () => stream);
 
   try {
     func();
   } finally {
     console._stdout = stdout;
     console._stderr = stderr;
-    process.__defineGetter__('stdout', stdoutGetter);
-    process.__defineGetter__('stderr', stderrGetter);
+    defineGetter(process, 'stdout', stdoutGetter);
+    defineGetter(process, 'stderr', stderrGetter);
     debug('stdout restored');
   }
 }
