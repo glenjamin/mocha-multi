@@ -1,34 +1,34 @@
-var fs = require('fs');
-var util = require('util');
-var assign = require('object-assign');
-var debug = require('debug')('mocha:multi');
-var path = require('path');
-var isString = require('is-string');
-var mkdirp = require('mkdirp');
+const fs = require('fs');
+const util = require('util');
+const assign = require('object-assign');
+const debug = require('debug')('mocha:multi');
+const path = require('path');
+const isString = require('is-string');
+const mkdirp = require('mkdirp');
 
 // Let mocha decide about tty early
 require('mocha/lib/reporters/base');
 
-module.exports = MochaMulti
+module.exports = MochaMulti;
 
 // Make sure we don't lose these!
-var stdout = process.stdout;
-var stderr = process.stderr;
+const stdout = process.stdout;
+const stderr = process.stderr;
 
 function MochaMulti(runner, options) {
-  var setup;
+  let setup;
   this.options = options;
   // keep track of reporters that have a done method.
   this.reportersWithDone = [];
-  var reporters = (options && options.reporterOptions);
+  const reporters = (options && options.reporterOptions);
   if (reporters && Object.keys(reporters).length > 0) {
-    debug("options %j", options);
+    debug('options %j', options);
     setup = [];
-    Object.keys(reporters).forEach(function(reporter) {
-      debug("adding reporter %j %j", reporter, reporters[reporter]);
+    Object.keys(reporters).forEach((reporter) => {
+      debug('adding reporter %j %j', reporter, reporters[reporter]);
 
-      var stdout;
-      var options;
+      let stdout;
+      let options;
       if (isString(reporters[reporter])) {
         stdout = reporters[reporter];
         options = null;
@@ -37,18 +37,18 @@ function MochaMulti(runner, options) {
         options = reporters[reporter].options;
       }
 
-      setup.push([ reporter, stdout, options ]);
+      setup.push([reporter, stdout, options]);
     });
   } else {
     setup = parseSetup();
   }
-  debug("setup %j", setup);
-  var streams = initReportersAndStreams(runner, setup, this);
+  debug('setup %j', setup);
+  let streams = initReportersAndStreams(runner, setup, this);
   // Remove nulls
   streams = streams.filter(identity);
 
-  //we actually need to wait streams only if they are present
-  if(streams.length > 0) {
+  // we actually need to wait streams only if they are present
+  if (streams.length > 0) {
     awaitStreamsOnExit(streams);
   }
 }
@@ -57,13 +57,13 @@ function MochaMulti(runner, options) {
  * Override done to allow done processing for any reporters that have a done method.
  */
 MochaMulti.prototype.done = function (failures, fn) {
-  var self = this;
+  const self = this;
 
-  if(self.reportersWithDone.length !== 0) {
-    var count = self.reportersWithDone.length;
+  if (self.reportersWithDone.length !== 0) {
+    let count = self.reportersWithDone.length;
     debug('Awaiting on %j reporters to invoke done callback.', count);
-    var cb = function() {
-      if(--count === 0) {
+    const cb = function () {
+      if (--count === 0) {
         debug('All reporters invoked done callback.');
         fn(failures);
       } else {
@@ -71,7 +71,7 @@ MochaMulti.prototype.done = function (failures, fn) {
       }
     };
 
-    self.reportersWithDone.forEach(function(r) {
+    self.reportersWithDone.forEach((r) => {
       r.done(failures, cb);
     });
   } else {
@@ -80,33 +80,33 @@ MochaMulti.prototype.done = function (failures, fn) {
   }
 };
 
-var msgs = {
+const msgs = {
   no_definitions: "reporter definitions should be set in \
 the `multi` shell variable\n\
 eg. `multi='dot=- xunit=file.xml' mocha`",
   invalid_definition: "'%s' is an invalid definition\n\
 expected <reporter>=<destination>",
-  invalid_reporter: "Unable to find '%s' reporter"
-}
+  invalid_reporter: "Unable to find '%s' reporter",
+};
 function bombOut(id) {
-  var args = Array.prototype.slice.call(arguments, 0);
-  args[0] = 'ERROR: ' + msgs[id];
-  stderr.write(util.format.apply(util, args) + "\n");
+  const args = Array.prototype.slice.call(arguments, 0);
+  args[0] = `ERROR: ${msgs[id]}`;
+  stderr.write(`${util.format(...args)}\n`);
   process.exit(1);
 }
 
 function parseSetup() {
-  var reporterDefinition = process.env.multi || '';
-  var reporterDefs = reporterDefinition.trim().split(/\s/).filter(identity);
+  const reporterDefinition = process.env.multi || '';
+  const reporterDefs = reporterDefinition.trim().split(/\s/).filter(identity);
   if (!reporterDefs.length) {
     bombOut('no_definitions');
   }
-  debug("Got reporter defs: %j", reporterDefs);
+  debug('Got reporter defs: %j', reporterDefs);
   return reporterDefs.map(parseReporter);
 }
 
 function parseReporter(definition) {
-  var pair = definition.split('=');
+  const pair = definition.split('=');
   if (pair.length != 2) {
     bombOut('invalid_definition', definition);
   }
@@ -114,46 +114,48 @@ function parseReporter(definition) {
 }
 
 function initReportersAndStreams(runner, setup, multi) {
-  return setup.map(function(definition) {
-    var reporter=definition[0], outstream=definition[1], options=definition[2]
+  return setup.map((definition) => {
+    let reporter = definition[0],
+      outstream = definition[1],
+      options = definition[2];
 
     debug("Initialising reporter '%s' to '%s' with options %j", reporter, outstream, options);
 
-    var stream = resolveStream(outstream);
-    var shim = createRunnerShim(runner, stream);
+    const stream = resolveStream(outstream);
+    const shim = createRunnerShim(runner, stream);
 
     debug("Shimming runner into reporter '%s' %j", reporter, options);
 
-    withReplacedStdout(stream, function() {
-      var Reporter = resolveReporter(reporter);
-      var r = new Reporter(shim, assign({}, multi.options, {
-        reporterOptions: options || {}
+    withReplacedStdout(stream, () => {
+      const Reporter = resolveReporter(reporter);
+      const r = new Reporter(shim, assign({}, multi.options, {
+        reporterOptions: options || {},
       }));
       // If the reporter possess a done() method register it so we can
       // wait for it to complete when done.
-      if(r && r.done) {
+      if (r && r.done) {
         multi.reportersWithDone.push(r);
       }
       return r;
-    })
+    });
 
     return stream;
-  })
+  });
 }
 
 function awaitStreamsOnExit(streams) {
-  var exit = process.exit;
-  var num = streams.length;
-  process.exit = function(code) {
-    var quit = exit.bind(process, code);
-    streams.forEach(function(stream) {
-      stream.end(function() {
+  const exit = process.exit;
+  let num = streams.length;
+  process.exit = function (code) {
+    const quit = exit.bind(process, code);
+    streams.forEach((stream) => {
+      stream.end(() => {
         num--;
         onClose();
       });
     });
     function onClose() {
-      if(num === 0) {
+      if (num === 0) {
         quit();
       }
     }
@@ -162,8 +164,8 @@ function awaitStreamsOnExit(streams) {
 
 function resolveReporter(name) {
   // Cribbed from Mocha.prototype.reporter()
-  var reporter;
-  reporter = safeRequire('mocha/lib/reporters/' + name);
+  let reporter;
+  reporter = safeRequire(`mocha/lib/reporters/${name}`);
   if (!reporter) {
     reporter = safeRequire(name);
   }
@@ -192,8 +194,8 @@ function resolveStream(destination) {
   }
   debug("Resolved stream '%s' into writeable file stream", destination);
   // Create directory if not existing
-  var destinationDir = path.dirname(destination);
-  if (!fs.existsSync(destinationDir)){
+  const destinationDir = path.dirname(destination);
+  if (!fs.existsSync(destinationDir)) {
     mkdirp.sync(destinationDir);
   }
 
@@ -203,15 +205,15 @@ function resolveStream(destination) {
 }
 
 function createRunnerShim(runner, stream) {
-  var shim = new (require('events').EventEmitter)();
+  const shim = new (require('events').EventEmitter)();
 
   addDelegate('grepTotal');
   addDelegate('suite');
   addDelegate('total');
 
   function addDelegate(prop) {
-    shim.__defineGetter__(prop, function() {
-      var property = runner[prop];
+    shim.__defineGetter__(prop, () => {
+      let property = runner[prop];
       if (typeof property === 'function') {
         property = property.bind(runner);
       }
@@ -219,26 +221,23 @@ function createRunnerShim(runner, stream) {
     });
   }
 
-  var delegatedEvents = {};
+  const delegatedEvents = {};
 
-  shim.on('newListener', function(event) {
-
+  shim.on('newListener', (event) => {
     if (event in delegatedEvents) return;
 
     delegatedEvents[event] = true;
     debug("Shim: Delegating '%s'", event);
 
-    runner.on(event, function() {
-      var eventArgs = Array.prototype.slice.call(arguments, 0);
+    runner.on(event, function () {
+      const eventArgs = Array.prototype.slice.call(arguments, 0);
       eventArgs.unshift(event);
 
-      withReplacedStdout(stream, function() {
-        shim.emit.apply(shim, eventArgs)
-      })
-
-    })
-
-  })
+      withReplacedStdout(stream, () => {
+        shim.emit(...eventArgs);
+      });
+    });
+  });
 
   return shim;
 }
@@ -251,13 +250,13 @@ function withReplacedStdout(stream, func) {
   // The hackiest of hacks
   debug('Replacing stdout');
 
-  var stdoutGetter = Object.getOwnPropertyDescriptor(process, 'stdout').get;
-  var stderrGetter = Object.getOwnPropertyDescriptor(process, 'stderr').get;
+  const stdoutGetter = Object.getOwnPropertyDescriptor(process, 'stdout').get;
+  const stderrGetter = Object.getOwnPropertyDescriptor(process, 'stderr').get;
 
   console._stdout = stream;
   console._stderr = stream;
-  process.__defineGetter__('stdout', function() { return stream });
-  process.__defineGetter__('stderr', function() { return stream });
+  process.__defineGetter__('stdout', () => stream);
+  process.__defineGetter__('stderr', () => stream);
 
   try {
     func();
