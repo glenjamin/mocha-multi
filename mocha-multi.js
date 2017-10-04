@@ -15,8 +15,8 @@ const { stdout, stderr } = process;
 function defineGetter(obj, prop, get) {
   Object.defineProperty(obj, prop, { get });
 }
-
-const waitStream = stream => new Promise(resolve => stream.end(() => resolve()));
+const waitOn = fn => v => new Promise(resolve => fn(v, () => resolve()));
+const waitStream = waitOn((r, fn) => r.end(fn));
 
 function awaitStreamsOnExit(streams) {
   const { exit } = process;
@@ -186,29 +186,33 @@ function initReportersAndStreams(runner, setup, multiOptions) {
     .filter(identity);
 }
 
+function promiseProgress(items, fn) {
+  let count = 0;
+  fn(count);
+  items.forEach(v => v.then(() => {
+    count += 1;
+    fn(count);
+  }));
+  return Promise.all(items);
+}
+
+
 /**
  * Override done to allow done processing for any reporters that have a done method.
  */
 function done(failures, fn, reportersWithDone) {
-  if (reportersWithDone.length !== 0) {
-    let count = reportersWithDone.length;
-    debug('Awaiting on %j reporters to invoke done callback.', count);
-    const cb = () => {
-      count -= 1;
-      if (count <= 0) {
-        debug('All reporters invoked done callback.');
-        fn(failures);
-      } else {
-        debug('Awaiting on %j reporters to invoke done callback.', count);
-      }
-    };
-
-    reportersWithDone.forEach((r) => {
-      r.done(failures, cb);
-    });
-  } else {
+  const count = reportersWithDone.length;
+  const waitReporter = waitOn((r, f) => r.done(failures, f));
+  const progress = v => debug('Awaiting on %j reporters to invoke done callback.', count - v);
+  if (count === 0) {
     debug('No reporters have done method, completing.');
     fn(failures);
+  } else {
+    promiseProgress(reportersWithDone.map(waitReporter), progress)
+      .then(() => {
+        debug('All reporters invoked done callback.');
+        fn(failures);
+      });
   }
 }
 
