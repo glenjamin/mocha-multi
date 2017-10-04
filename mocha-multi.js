@@ -14,6 +14,10 @@ module.exports = MochaMulti;
 // Make sure we don't lose these!
 const { stdout, stderr } = process;
 
+function defineGetter(obj, prop, get) {
+  Object.defineProperty(obj, prop, { get });
+}
+
 function MochaMulti(runner, options) {
   let setup;
   this.options = options;
@@ -56,7 +60,8 @@ MochaMulti.prototype.done = function (failures, fn) {
     let count = self.reportersWithDone.length;
     debug('Awaiting on %j reporters to invoke done callback.', count);
     const cb = () => {
-      if (--count === 0) {
+      count -= 1;
+      if (count <= 0) {
         debug('All reporters invoked done callback.');
         fn(failures);
       } else {
@@ -74,17 +79,16 @@ MochaMulti.prototype.done = function (failures, fn) {
 };
 
 const msgs = {
-  no_definitions: "reporter definitions should be set in \
-the `multi` shell variable\n\
-eg. `multi='dot=- xunit=file.xml' mocha`",
-  invalid_definition: "'%s' is an invalid definition\n\
-expected <reporter>=<destination>",
+  no_definitions: 'reporter definitions should be set in ' +
+                  'the `multi` shell variable\n' +
+                  "eg. `multi='dot=- xunit=file.xml' mocha`",
+  invalid_definition: "'%s' is an invalid definition\n" +
+                      'expected <reporter>=<destination>',
   invalid_reporter: "Unable to find '%s' reporter",
 };
-function bombOut(id) {
-  const args = Array.prototype.slice.call(arguments, 0);
-  args[0] = `ERROR: ${msgs[id]}`;
-  stderr.write(`${util.format(...args)}\n`);
+function bombOut(id, ...args) {
+  const newArgs = [`ERROR: ${msgs[id]}`, ...args];
+  stderr.write(`${util.format(...newArgs)}\n`);
   process.exit(1);
 }
 
@@ -100,7 +104,7 @@ function parseSetup() {
 
 function parseReporter(definition) {
   const pair = definition.split('=');
-  if (pair.length != 2) {
+  if (pair.length !== 2) {
     bombOut('invalid_definition', definition);
   }
   return pair;
@@ -143,7 +147,7 @@ function awaitStreamsOnExit(streams) {
     const quit = exit.bind(process, code);
     streams.forEach((stream) => {
       stream.end(() => {
-        num--;
+        num -= 1;
         onClose();
       });
     });
@@ -181,7 +185,7 @@ function safeRequire(module) {
 }
 
 function resolveStream(destination) {
-  if (destination == '-') {
+  if (destination === '-') {
     debug("Resolved stream '-' into stdout and stderr");
     return null;
   }
@@ -205,7 +209,7 @@ function createRunnerShim(runner, stream) {
   addDelegate('total');
 
   function addDelegate(prop) {
-    shim.__defineGetter__(prop, () => {
+    defineGetter(shim, prop, () => {
       let property = runner[prop];
       if (typeof property === 'function') {
         property = property.bind(runner);
@@ -236,7 +240,8 @@ function createRunnerShim(runner, stream) {
 
 function withReplacedStdout(stream, func) {
   if (!stream) {
-    return func();
+    func();
+    return;
   }
 
   // The hackiest of hacks
@@ -247,16 +252,16 @@ function withReplacedStdout(stream, func) {
 
   console._stdout = stream;
   console._stderr = stream;
-  process.__defineGetter__('stdout', () => stream);
-  process.__defineGetter__('stderr', () => stream);
+  defineGetter(process, 'stdout', () => stream);
+  defineGetter(process, 'stderr', () => stream);
 
   try {
     func();
   } finally {
     console._stdout = stdout;
     console._stderr = stderr;
-    process.__defineGetter__('stdout', stdoutGetter);
-    process.__defineGetter__('stderr', stderrGetter);
+    defineGetter(process, 'stdout', stdoutGetter);
+    defineGetter(process, 'stderr', stderrGetter);
     debug('stdout restored');
   }
 }
