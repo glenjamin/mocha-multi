@@ -236,7 +236,8 @@ function createRunnerShim(runner, stream) {
 
 function withReplacedStdout(stream, func) {
   if (!stream) {
-    return func();
+    func();
+    return;
   }
 
   // The hackiest of hacks
