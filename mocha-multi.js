@@ -74,11 +74,11 @@ MochaMulti.prototype.done = function (failures, fn) {
 };
 
 const msgs = {
-  no_definitions: "reporter definitions should be set in \
-the `multi` shell variable\n\
-eg. `multi='dot=- xunit=file.xml' mocha`",
-  invalid_definition: "'%s' is an invalid definition\n\
-expected <reporter>=<destination>",
+  no_definitions: 'reporter definitions should be set in ' +
+                  'the `multi` shell variable\n' +
+                  "eg. `multi='dot=- xunit=file.xml' mocha`",
+  invalid_definition: "'%s' is an invalid definition\n" +
+                      'expected <reporter>=<destination>',
   invalid_reporter: "Unable to find '%s' reporter",
 };
 function bombOut(id) {
