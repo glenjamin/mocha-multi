@@ -167,11 +167,7 @@ function createRunnerShim(runner, stream) {
 
 function initReportersAndStreams(runner, setup, multiOptions) {
   return setup
-    .map((definition) => {
-      const reporter = definition[0];
-      const outstream = definition[1];
-      const options = definition[2];
-
+    .map(([reporter, outstream, options]) => {
       debug("Initialising reporter '%s' to '%s' with options %j", reporter, outstream, options);
 
       const stream = resolveStream(outstream);
