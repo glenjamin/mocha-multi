@@ -1,0 +1,12 @@
+{
+    "plugins": ["node"],
+    "extends": ["eslint:recommended", "plugin:node/recommended"],
+    "overrides": [
+        {
+            "files": ["test/**"],
+            "env": {
+                "mocha": true
+            }
+        }
+    ]
+}
