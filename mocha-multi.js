@@ -16,22 +16,13 @@ function defineGetter(obj, prop, get) {
   Object.defineProperty(obj, prop, { get });
 }
 
+const waitStream = stream => new Promise(resolve => stream.end(() => resolve()));
+
 function awaitStreamsOnExit(streams) {
   const { exit } = process;
-  let num = streams.length;
   process.exit = (code) => {
     const quit = exit.bind(process, code);
-    function onClose() {
-      if (num === 0) {
-        quit();
-      }
-    }
-    streams.forEach((stream) => {
-      stream.end(() => {
-        num -= 1;
-        onClose();
-      });
-    });
+    Promise.all(streams.map(waitStream)).then(quit);
   };
 }
 
@@ -101,14 +92,11 @@ function safeRequire(module) {
 
 function resolveReporter(name) {
   // Cribbed from Mocha.prototype.reporter()
-  let reporter;
-  reporter = safeRequire(`mocha/lib/reporters/${name}`);
-  if (!reporter) {
-    reporter = safeRequire(name);
-  }
-  if (!reporter) {
-    bombOut('invalid_reporter', name);
-  }
+  const reporter = (
+    safeRequire(`mocha/lib/reporters/${name}`) ||
+    safeRequire(name) ||
+    bombOut('invalid_reporter', name)
+  );
   debug("Resolved reporter '%s' into '%s'", name, util.inspect(reporter));
   return reporter;
 }
@@ -146,9 +134,9 @@ function createRunnerShim(runner, stream) {
 
   function addDelegate(prop) {
     defineGetter(shim, prop, () => {
-      let property = runner[prop];
+      const property = runner[prop];
       if (typeof property === 'function') {
-        property = property.bind(runner);
+        return property.bind(runner);
       }
       return property;
     });
@@ -209,30 +197,30 @@ function initReportersAndStreams(runner, setup, multi) {
 }
 
 function MochaMulti(runner, options) {
-  let setup;
   this.options = options;
   // keep track of reporters that have a done method.
   this.reportersWithDone = [];
   const reporters = (options && options.reporterOptions);
-  if (reporters && Object.keys(reporters).length > 0) {
-    debug('options %j', options);
-    setup = Object.keys(reporters).map((reporter) => {
-      debug('adding reporter %j %j', reporter, reporters[reporter]);
-      const r = reporters[reporter];
+  const setup = (() => {
+    if (reporters && Object.keys(reporters).length > 0) {
+      debug('options %j', options);
+      return Object.keys(reporters).map((reporter) => {
+        debug('adding reporter %j %j', reporter, reporters[reporter]);
+        const r = reporters[reporter];
 
-      if (isString(r)) {
-        return [reporter, r, null];
-      }
+        if (isString(r)) {
+          return [reporter, r, null];
+        }
 
-      return [reporter, r.stdout, r.options];
-    });
-  } else {
-    setup = parseSetup();
-  }
+        return [reporter, r.stdout, r.options];
+      });
+    }
+    return parseSetup();
+  })();
   debug('setup %j', setup);
-  let streams = initReportersAndStreams(runner, setup, this);
+  const streams = initReportersAndStreams(runner, setup, this)
+    .filter(identity);
   // Remove nulls
-  streams = streams.filter(identity);
 
   // we actually need to wait streams only if they are present
   if (streams.length > 0) {
