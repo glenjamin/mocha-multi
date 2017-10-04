@@ -1,6 +1,26 @@
 {
     "plugins": ["node"],
     "extends": ["airbnb-base", "plugin:node/recommended"],
+    "rules": {
+        "consistent-return": 0,
+        "eqeqeq": 0,
+        "global-require": 0,
+        "import/no-dynamic-require": 0,
+        "import/no-extraneous-dependencies": 0,
+        "no-multi-str": 0,
+        "no-plusplus": 0,
+        "no-process-exit": 0,
+        "no-restricted-properties": 0,
+        "no-shadow": 0,
+        "no-underscore-dangle": 0,
+        "no-unused-expressions": 0,
+        "no-use-before-define": 0,
+        "node/no-unpublished-require": 0,
+        "one-var": 0,
+        "prefer-const": 0,
+        "prefer-destructuring": 0,
+        "prefer-rest-params": 0
+    },
     "overrides": [
         {
             "files": ["test/**"],
