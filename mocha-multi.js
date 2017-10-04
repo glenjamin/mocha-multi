@@ -74,7 +74,6 @@ MochaMulti.prototype.done = function (failures, fn) {
     });
   } else {
     debug('No reporters have done method, completing.');
-    fn(failures);
   }
 };
 
