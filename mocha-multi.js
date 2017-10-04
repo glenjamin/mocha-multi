@@ -56,7 +56,8 @@ MochaMulti.prototype.done = function (failures, fn) {
     let count = self.reportersWithDone.length;
     debug('Awaiting on %j reporters to invoke done callback.', count);
     const cb = () => {
-      if (--count === 0) {
+      count -= 1;
+      if (count <= 0) {
         debug('All reporters invoked done callback.');
         fn(failures);
       } else {
@@ -143,7 +144,7 @@ function awaitStreamsOnExit(streams) {
     const quit = exit.bind(process, code);
     streams.forEach((stream) => {
       stream.end(() => {
-        num--;
+        num -= 1;
         onClose();
       });
     });
