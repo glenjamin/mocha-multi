@@ -101,7 +101,7 @@ function parseSetup() {
 
 function parseReporter(definition) {
   const pair = definition.split('=');
-  if (pair.length != 2) {
+  if (pair.length !== 2) {
     bombOut('invalid_definition', definition);
   }
   return pair;
@@ -182,7 +182,7 @@ function safeRequire(module) {
 }
 
 function resolveStream(destination) {
-  if (destination == '-') {
+  if (destination === '-') {
     debug("Resolved stream '-' into stdout and stderr");
     return null;
   }
