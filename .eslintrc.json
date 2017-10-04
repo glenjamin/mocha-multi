@@ -1,12 +1,6 @@
 {
     "plugins": ["node"],
-    "extends": ["eslint:recommended", "plugin:node/recommended"],
-    "rules": {
-        "no-process-exit": 0,
-        "no-console": 0,
-        "node/no-unpublished-require": 0,
-        "no-console-statement": 0
-    },
+    "extends": ["airbnb-base", "plugin:node/recommended"],
     "overrides": [
         {
             "files": ["test/**"],
