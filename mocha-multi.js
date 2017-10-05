@@ -10,7 +10,7 @@ const mkdirp = require('mkdirp');
 require('mocha/lib/reporters/base');
 
 // Make sure we don't lose these!
-const { stdout, stderr } = process;
+const { stdout } = process;
 
 function defineGetter(obj, prop, get) {
   Object.defineProperty(obj, prop, { get });
@@ -40,7 +40,7 @@ const msgs = {
 };
 function bombOut(id, ...args) {
   const newArgs = [`ERROR: ${msgs[id]}`, ...args];
-  stderr.write(`${util.format(...newArgs)}\n`);
+  process.stderr.write(`${util.format(...newArgs)}\n`);
   process.exit(1);
 }
 
@@ -110,20 +110,15 @@ function withReplacedStdout(stream, func) {
   debug('Replacing stdout');
 
   const stdoutGetter = Object.getOwnPropertyDescriptor(process, 'stdout').get;
-  const stderrGetter = Object.getOwnPropertyDescriptor(process, 'stderr').get;
 
   console._stdout = stream;
-  console._stderr = stream;
   defineGetter(process, 'stdout', () => stream);
-  defineGetter(process, 'stderr', () => stream);
 
   try {
     return func();
   } finally {
     console._stdout = stdout;
-    console._stderr = stderr;
     defineGetter(process, 'stdout', stdoutGetter);
-    defineGetter(process, 'stderr', stderrGetter);
     debug('stdout restored');
   }
 }
