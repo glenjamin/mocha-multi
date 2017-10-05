@@ -88,8 +88,6 @@ Could this be a bit less hacky?
 
  * Now that https://github.com/mochajs/mocha/pull/1059 is released the process.exit hack could be tidier
 
- * Now that https://github.com/mochajs/mocha/pull/1061 is released, I only need to hijack stdout, and can leave stderr alone
-
  * Having each reporter run in a child process would make it eaiser to capture their streams, but might lead to other issues
 
 TODO
