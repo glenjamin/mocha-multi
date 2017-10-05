@@ -238,12 +238,11 @@ function mochaMulti(runner, options) {
 
   if (reportersWithDone.length > 0) {
     return {
-      options,
       done: (failures, fn) => done(failures, fn, reportersWithDone),
     };
   }
 
-  return { options };
+  return {};
 }
 
 class MochaMulti {
