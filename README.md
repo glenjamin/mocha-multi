@@ -99,3 +99,19 @@ TODO
 * Add test for help text
 * Add test that uses --no-exit
 * Add test that doesn't use _mocha (maybe not?)
+
+HISTORY
+-------
+
+### 0.12.0 (unreleased)
+
+* Declare support for mocha@^4.0.0
+* Support running mocha without a run callback
+* Upgrade to ES2015+ via eslint-preset-airbnb-base
+* Avoid patching stderr, now that mocha does not write to it
+
+Breaking:
+
+* MochaMulti.prototype.done removed, new MochaMulti(...).done now optional.
+* Must run at least mocha@>=2.2.0
+* Must run at least node@>=6.0.0
