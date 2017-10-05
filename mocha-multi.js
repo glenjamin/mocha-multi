@@ -16,22 +16,13 @@ function defineGetter(obj, prop, get) {
   Object.defineProperty(obj, prop, { get });
 }
 
+const waitStream = stream => new Promise(resolve => stream.end(() => resolve()));
+
 function awaitStreamsOnExit(streams) {
   const { exit } = process;
-  let num = streams.length;
   process.exit = (code) => {
     const quit = exit.bind(process, code);
-    function onClose() {
-      if (num === 0) {
-        quit();
-      }
-    }
-    streams.forEach((stream) => {
-      stream.end(() => {
-        num -= 1;
-        onClose();
-      });
-    });
+    Promise.all(streams.map(waitStream)).then(quit);
   };
 }
 
@@ -101,22 +92,18 @@ function safeRequire(module) {
 
 function resolveReporter(name) {
   // Cribbed from Mocha.prototype.reporter()
-  let reporter;
-  reporter = safeRequire(`mocha/lib/reporters/${name}`);
-  if (!reporter) {
-    reporter = safeRequire(name);
-  }
-  if (!reporter) {
-    bombOut('invalid_reporter', name);
-  }
+  const reporter = (
+    safeRequire(`mocha/lib/reporters/${name}`) ||
+    safeRequire(name) ||
+    bombOut('invalid_reporter', name)
+  );
   debug("Resolved reporter '%s' into '%s'", name, util.inspect(reporter));
   return reporter;
 }
 
 function withReplacedStdout(stream, func) {
   if (!stream) {
-    func();
-    return;
+    return func();
   }
 
   // The hackiest of hacks
@@ -131,7 +118,7 @@ function withReplacedStdout(stream, func) {
   defineGetter(process, 'stderr', () => stream);
 
   try {
-    func();
+    return func();
   } finally {
     console._stdout = stdout;
     console._stderr = stderr;
@@ -146,9 +133,9 @@ function createRunnerShim(runner, stream) {
 
   function addDelegate(prop) {
     defineGetter(shim, prop, () => {
-      let property = runner[prop];
+      const property = runner[prop];
       if (typeof property === 'function') {
-        property = property.bind(runner);
+        return property.bind(runner);
       }
       return property;
     });
@@ -178,76 +165,33 @@ function createRunnerShim(runner, stream) {
   return shim;
 }
 
-function initReportersAndStreams(runner, setup, multi) {
-  return setup.map((definition) => {
-    const reporter = definition[0];
-    const outstream = definition[1];
-    const options = definition[2];
+function initReportersAndStreams(runner, setup, multiOptions) {
+  return setup
+    .map(([reporter, outstream, options]) => {
+      debug("Initialising reporter '%s' to '%s' with options %j", reporter, outstream, options);
 
-    debug("Initialising reporter '%s' to '%s' with options %j", reporter, outstream, options);
+      const stream = resolveStream(outstream);
+      const shim = createRunnerShim(runner, stream);
 
-    const stream = resolveStream(outstream);
-    const shim = createRunnerShim(runner, stream);
+      debug("Shimming runner into reporter '%s' %j", reporter, options);
 
-    debug("Shimming runner into reporter '%s' %j", reporter, options);
-
-    withReplacedStdout(stream, () => {
-      const Reporter = resolveReporter(reporter);
-      const r = new Reporter(shim, assign({}, multi.options, {
-        reporterOptions: options || {},
-      }));
-      // If the reporter possess a done() method register it so we can
-      // wait for it to complete when done.
-      if (r && r.done) {
-        multi.reportersWithDone.push(r);
-      }
-      return r;
-    });
-
-    return stream;
-  });
-}
-
-function MochaMulti(runner, options) {
-  let setup;
-  this.options = options;
-  // keep track of reporters that have a done method.
-  this.reportersWithDone = [];
-  const reporters = (options && options.reporterOptions);
-  if (reporters && Object.keys(reporters).length > 0) {
-    debug('options %j', options);
-    setup = Object.keys(reporters).map((reporter) => {
-      debug('adding reporter %j %j', reporter, reporters[reporter]);
-      const r = reporters[reporter];
-
-      if (isString(r)) {
-        return [reporter, r, null];
-      }
-
-      return [reporter, r.stdout, r.options];
-    });
-  } else {
-    setup = parseSetup();
-  }
-  debug('setup %j', setup);
-  let streams = initReportersAndStreams(runner, setup, this);
-  // Remove nulls
-  streams = streams.filter(identity);
-
-  // we actually need to wait streams only if they are present
-  if (streams.length > 0) {
-    awaitStreamsOnExit(streams);
-  }
+      return withReplacedStdout(stream, () => {
+        const Reporter = resolveReporter(reporter);
+        return new Reporter(shim, assign({}, multiOptions, {
+          reporterOptions: options || {},
+        }));
+      });
+    })
+    // Remove nulls
+    .filter(identity);
 }
 
 /**
  * Override done to allow done processing for any reporters that have a done method.
  */
-MochaMulti.prototype.done = function (failures, fn) {
-  const self = this;
-
-  if (self.reportersWithDone.length !== 0) {
-    let count = self.reportersWithDone.length;
+function done(failures, fn, reportersWithDone) {
+  if (reportersWithDone.length !== 0) {
+    let count = reportersWithDone.length;
     debug('Awaiting on %j reporters to invoke done callback.', count);
     const cb = () => {
       count -= 1;
@@ -259,13 +203,53 @@ MochaMulti.prototype.done = function (failures, fn) {
       }
     };
 
-    self.reportersWithDone.forEach((r) => {
+    reportersWithDone.forEach((r) => {
       r.done(failures, cb);
     });
   } else {
     debug('No reporters have done method, completing.');
     fn(failures);
   }
-};
+}
+
+function mochaMulti(runner, options) {
+  // keep track of reporters that have a done method.
+  const reporters = (options && options.reporterOptions);
+  const setup = (() => {
+    if (reporters && Object.keys(reporters).length > 0) {
+      debug('options %j', options);
+      return Object.keys(reporters).map((reporter) => {
+        debug('adding reporter %j %j', reporter, reporters[reporter]);
+        const r = reporters[reporter];
+
+        if (isString(r)) {
+          return [reporter, r, null];
+        }
+
+        return [reporter, r.stdout, r.options];
+      });
+    }
+    return parseSetup();
+  })();
+  debug('setup %j', setup);
+  // If the reporter possess a done() method register it so we can
+  // wait for it to complete when done.
+  const streams = initReportersAndStreams(runner, setup, options);
+  const reportersWithDone = streams.filter(v => v.done);
+
+  // we actually need to wait streams only if they are present
+  if (streams.length > 0) {
+    awaitStreamsOnExit(streams);
+  }
+
+  return {
+    options,
+    done: (failures, fn) => done(failures, fn, reportersWithDone),
+  };
+}
+
+function MochaMulti(runner, options) {
+  Object.assign(this, mochaMulti(runner, options));
+}
 
 module.exports = MochaMulti;
