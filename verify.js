@@ -12,6 +12,10 @@ const reporters = [
 ];
 const now = new Date();
 
+function tempName(reporter) {
+  return `/tmp/mocha-multi.${reporter}.${+now}`;
+}
+
 const reportersWithOptions = []
   .concat(reporters.map((reporter) => {
     const outFilename = tempName(`${reporter}-stdout`);
@@ -38,10 +42,6 @@ const reportersWithOptions = []
 
 
 should(process.env.multi).not.be.ok;
-
-function tempName(reporter) {
-  return `/tmp/mocha-multi.${reporter}.${+now}`;
-}
 
 process.setMaxListeners(reportersWithOptions.length);
 
