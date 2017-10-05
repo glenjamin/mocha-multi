@@ -207,7 +207,7 @@ function done(failures, fn, reportersWithDone) {
   promiseProgress(reportersWithDone.map(waitReporter), progress)
     .then(() => {
       debug('All reporters invoked done callback.');
-      fn(failures);
+      fn && fn(failures);
     });
 }
 
