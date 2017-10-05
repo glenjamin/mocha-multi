@@ -246,8 +246,10 @@ function mochaMulti(runner, options) {
   return { options };
 }
 
-function MochaMulti(runner, options) {
-  Object.assign(this, mochaMulti(runner, options));
+class MochaMulti {
+  constructor(runner, options) {
+    Object.assign(this, mochaMulti(runner, options));
+  }
 }
 
 module.exports = MochaMulti;
