@@ -204,16 +204,11 @@ function done(failures, fn, reportersWithDone) {
   const count = reportersWithDone.length;
   const waitReporter = waitOn((r, f) => r.done(failures, f));
   const progress = v => debug('Awaiting on %j reporters to invoke done callback.', count - v);
-  if (count === 0) {
-    debug('No reporters have done method, completing.');
-    fn(failures);
-  } else {
-    promiseProgress(reportersWithDone.map(waitReporter), progress)
-      .then(() => {
-        debug('All reporters invoked done callback.');
-        fn(failures);
-      });
-  }
+  promiseProgress(reportersWithDone.map(waitReporter), progress)
+    .then(() => {
+      debug('All reporters invoked done callback.');
+      fn(failures);
+    });
 }
 
 function mochaMulti(runner, options) {
@@ -246,10 +241,14 @@ function mochaMulti(runner, options) {
     awaitStreamsOnExit(streams);
   }
 
-  return {
-    options,
-    done: (failures, fn) => done(failures, fn, reportersWithDone),
-  };
+  if (reportersWithDone.length > 0) {
+    return {
+      options,
+      done: (failures, fn) => done(failures, fn, reportersWithDone),
+    };
+  }
+
+  return { options };
 }
 
 function MochaMulti(runner, options) {
