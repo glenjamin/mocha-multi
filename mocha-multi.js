@@ -19,10 +19,10 @@ function defineGetter(obj, prop, get) {
 const waitOn = fn => v => new Promise(resolve => fn(v, () => resolve()));
 const waitStream = waitOn((r, fn) => r.end(fn));
 
-function awaitStreamsOnExit(streams) {
-  const waitFor = once(() => Promise
-    .all(streams.map(waitStream))
-    .catch(console.error));
+function awaitOnExit(waitFor) {
+  if (!waitFor) {
+    return;
+  }
   const { exit } = process;
   process.exit = function mochaMultiExitPatch(...args) {
     const quit = exit.bind(this, ...args);
@@ -30,6 +30,7 @@ function awaitStreamsOnExit(streams) {
       return quit();
     }
     waitFor().then(exit.bind(this, ...args));
+    return undefined;
   };
 }
 
@@ -203,15 +204,16 @@ function promiseProgress(items, fn) {
 /**
  * Override done to allow done processing for any reporters that have a done method.
  */
-function done(failures, fn, reportersWithDone) {
+function done(failures, fn, reportersWithDone, waitFor = identity) {
   const count = reportersWithDone.length;
   const waitReporter = waitOn((r, f) => r.done(failures, f));
   const progress = v => debug('Awaiting on %j reporters to invoke done callback.', count - v);
   promiseProgress(reportersWithDone.map(waitReporter), progress)
     .then(() => {
       debug('All reporters invoked done callback.');
-      fn && fn(failures);
-    });
+    })
+    .then(waitFor)
+    .then(() => fn && fn(failures));
 }
 
 function mochaMulti(runner, options) {
@@ -245,13 +247,15 @@ function mochaMulti(runner, options) {
     .filter(v => v.done);
 
   // we actually need to wait streams only if they are present
-  if (streams.length > 0) {
-    awaitStreamsOnExit(streams);
-  }
+  const waitFor = streams.length > 0 ? once(() => Promise
+    .all(streams.map(waitStream))
+    .catch(console.error)) : undefined;
+
+  awaitOnExit(waitFor);
 
   if (reportersWithDone.length > 0) {
     return {
-      done: (failures, fn) => done(failures, fn, reportersWithDone),
+      done: (failures, fn) => done(failures, fn, reportersWithDone, waitFor),
     };
   }
 
