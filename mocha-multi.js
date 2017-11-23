@@ -19,10 +19,12 @@ const waitOn = fn => v => new Promise(resolve => fn(v, () => resolve()));
 const waitStream = waitOn((r, fn) => r.end(fn));
 
 function awaitStreamsOnExit(streams) {
+  const waitFor = Promise
+    .all(streams.map(waitStream))
+    .catch(console.error);
   const { exit } = process;
-  process.exit = (code) => {
-    const quit = exit.bind(process, code);
-    Promise.all(streams.map(waitStream)).then(quit);
+  process.exit = function mochaMultiExitPatch(...args) {
+    waitFor.then(exit.bind(this, ...args));
   };
 }
 
@@ -172,13 +174,14 @@ function initReportersAndStreams(runner, setup, multiOptions) {
 
       return withReplacedStdout(stream, () => {
         const Reporter = resolveReporter(reporter);
-        return new Reporter(shim, assign({}, multiOptions, {
-          reporterOptions: options || {},
-        }));
+        return {
+          stream,
+          reporter: new Reporter(shim, assign({}, multiOptions, {
+            reporterOptions: options || {},
+          })),
+        };
       });
-    })
-    // Remove nulls
-    .filter(identity);
+    });
 }
 
 function promiseProgress(items, fn) {
@@ -228,8 +231,13 @@ function mochaMulti(runner, options) {
   debug('setup %j', setup);
   // If the reporter possess a done() method register it so we can
   // wait for it to complete when done.
-  const streams = initReportersAndStreams(runner, setup, options);
-  const reportersWithDone = streams.filter(v => v.done);
+  const reportersAndStreams = initReportersAndStreams(runner, setup, options);
+  const streams = reportersAndStreams
+    .map(v => v.stream)
+    .filter(identity);
+  const reportersWithDone = reportersAndStreams
+    .map(v => v.reporter)
+    .filter(v => v.done);
 
   // we actually need to wait streams only if they are present
   if (streams.length > 0) {
