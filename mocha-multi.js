@@ -25,6 +25,10 @@ function awaitStreamsOnExit(streams) {
     .catch(console.error));
   const { exit } = process;
   process.exit = function mochaMultiExitPatch(...args) {
+    const quit = exit.bind(this, ...args);
+    if (process._exiting) {
+      return quit();
+    }
     waitFor().then(exit.bind(this, ...args));
   };
 }
