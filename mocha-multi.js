@@ -1,4 +1,5 @@
 const fs = require('fs');
+const once = require('lodash.once');
 const util = require('util');
 const assign = require('object-assign');
 const debug = require('debug')('mocha:multi');
@@ -19,12 +20,12 @@ const waitOn = fn => v => new Promise(resolve => fn(v, () => resolve()));
 const waitStream = waitOn((r, fn) => r.end(fn));
 
 function awaitStreamsOnExit(streams) {
-  const waitFor = Promise
+  const waitFor = once(() => Promise
     .all(streams.map(waitStream))
-    .catch(console.error);
+    .catch(console.error));
   const { exit } = process;
   process.exit = function mochaMultiExitPatch(...args) {
-    waitFor.then(exit.bind(this, ...args));
+    waitFor().then(exit.bind(this, ...args));
   };
 }
 
