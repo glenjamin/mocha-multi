@@ -29,7 +29,7 @@ function awaitOnExit(waitFor) {
     if (process._exiting) {
       return quit();
     }
-    waitFor().then(exit.bind(this, ...args));
+    waitFor().then(quit);
     return undefined;
   };
 }
@@ -247,9 +247,9 @@ function mochaMulti(runner, options) {
     .filter(v => v.done);
 
   // we actually need to wait streams only if they are present
-  const waitFor = streams.length > 0 ? once(() => Promise
-    .all(streams.map(waitStream))
-    .catch(console.error)) : undefined;
+  const waitFor = streams.length > 0 ?
+    once(() => Promise.all(streams.map(waitStream))) :
+    undefined;
 
   awaitOnExit(waitFor);
 
