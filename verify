@@ -36,18 +36,33 @@ function compare {
   local builtin_cmd="mocha -R $reporter &> $builtin_out"
   log "Running formatter normally: $builtin_cmd"
   eval $builtin_cmd
+  local builtin_result=$?
   normalise_timers $builtin_out
 
   # pipe through cat to ensure istty = false
-  local multi_cmd_env="multi='$reporter=$multi_env_out' mocha -R $mocha_multi | cat"
-  log "Running formatter via mocha-multi using environment variable: $multi_cmd_env"
-  eval $multi_cmd_env
+  local multi_env_cmd="multi='$reporter=$multi_env_out' mocha -R $mocha_multi | cat"
+  log "Running formatter via mocha-multi using environment variable: $multi_env_cmd"
+  eval $multi_env_cmd
+  local multi_env_result=${PIPESTATUS[0]}
   normalise_timers $multi_env_out
 
-  local multi_arg_env="mocha -R $mocha_multi --reporter-options '$reporter=$multi_arg_out' | cat"
-  log "Running formatter via mocha-multi using --reporter-options: $multi_arg_env"
-  eval $multi_arg_env
+  local multi_arg_cmd="mocha -R $mocha_multi --reporter-options '$reporter=$multi_arg_out' | cat"
+  log "Running formatter via mocha-multi using --reporter-options: $multi_arg_cmd"
+  eval $multi_arg_cmd
+  local multi_arg_result=${PIPESTATUS[0]}
   normalise_timers $multi_arg_out
+
+  log "Comparing exit codes"
+
+  if [ "$builtin_result" = "$multi_arg_result" -a "$builtin_result" = "$multi_env_result" ]; then
+    log 'Codes match, hooray!' pass
+  else
+    log "Codes do not match" fail
+    log "Result ${normal}$builtin_result"
+    log "Result (env) ${normal}$multi_env_result"
+    log "Result (arg) ${normal}$multi_arg_result"
+    return 1
+  fi
 
   log "Comparing output"
 
