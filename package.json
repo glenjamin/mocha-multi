@@ -4,10 +4,11 @@
   "description": "A bit of a hack to get multiple reporters working with mocha",
   "main": "mocha-multi.js",
   "scripts": {
-    "test": "run-p -c lint verify:*",
-    "verify:sh": "./verify all",
+    "test": "run-s lint verify:*",
+    "ci": "run-s -c lint verify:*",
     "verify:node": "node ./verify.js",
-    "lint": "eslint ."
+    "verify:sh": "./verify all",
+    "lint": "eslint . --max-warnings 0"
   },
   "repository": {
     "type": "git",
