@@ -98,21 +98,19 @@ TODO
 * Add tests which produce multiple reports at once
 * Add test for help text
 * Add test that uses --no-exit
-* Add test that doesn't use _mocha (maybe not?)
 
 HISTORY
 -------
 
-### 0.12.0 (unreleased)
+### 1.0.0 (unreleased)
 
+The breaking changes are mostly around internals, and shouldn't affect most people.
+
+* BREAKING: MochaMulti.prototype.done removed, new MochaMulti(...).done now optional
+* BREAKING: new MochaMulti(...).options removed
+* BREAKING: Must run at least mocha@>=2.2.0
+* BREAKING: Must run at least node@>=6.0.0
 * Declare support for mocha@^4.0.0
 * Support running mocha without a run callback
 * Upgrade to ES2015+ via eslint-preset-airbnb-base (MochaMulti is an ES class)
 * Avoid patching stderr, now that mocha does not write to it
-
-Breaking:
-
-* MochaMulti.prototype.done removed, new MochaMulti(...).done now optional
-* new MochaMulti(...).options removed
-* Must run at least mocha@>=2.2.0
-* Must run at least node@>=6.0.0
