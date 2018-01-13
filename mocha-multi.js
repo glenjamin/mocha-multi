@@ -111,12 +111,14 @@ function withReplacedStdout(stream, func) {
 
   const stdoutGetter = Object.getOwnPropertyDescriptor(process, 'stdout').get;
 
+  // eslint-disable-next-line no-console
   console._stdout = stream;
   defineGetter(process, 'stdout', () => stream);
 
   try {
     return func();
   } finally {
+    // eslint-disable-next-line no-console
     console._stdout = stdout;
     defineGetter(process, 'stdout', stdoutGetter);
     debug('stdout restored');

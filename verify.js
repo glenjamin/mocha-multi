@@ -62,6 +62,7 @@ async.eachSeries(reportersWithOptions, (reporter, next) => {
   reportersWithOptions.forEach((reporter) => {
     fs.statSync.bind(fs, reporter.outFilename).should.not.throw();
     fs.unlinkSync(reporter.outFilename);
+    // eslint-disable-next-line no-console
     console.log(chalk.green('%s OK'), reporter.testName);
   });
 });
