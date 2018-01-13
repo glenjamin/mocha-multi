@@ -24,6 +24,13 @@ function normalise_timers {
   rm "$file.bak"
 }
 
+# pipe through cat to ensure istty = false, but capture exit code
+function eval_notty {
+  log "Running formatter $1: $2"
+  eval $2 | cat
+  return ${PIPESTATUS[0]}
+}
+
 function compare {
   local reporter=$1
 
@@ -34,22 +41,19 @@ function compare {
   local multi_arg_out=$(mktemp /tmp/mocha-multi.XXXXXXXXX)
 
   local builtin_cmd="mocha -R $reporter &> $builtin_out"
-  log "Running formatter normally: $builtin_cmd"
-  eval $builtin_cmd
+  eval_notty "normally" "$builtin_cmd"
   local builtin_result=$?
   normalise_timers $builtin_out
 
-  # pipe through cat to ensure istty = false
-  local multi_env_cmd="multi='$reporter=$multi_env_out' mocha -R $mocha_multi | cat"
-  log "Running formatter via mocha-multi using environment variable: $multi_env_cmd"
-  eval $multi_env_cmd
-  local multi_env_result=${PIPESTATUS[0]}
+
+  local multi_env_cmd="multi='$reporter=$multi_env_out' mocha -R $mocha_multi"
+  eval_notty "via mocha-multi using environment variable" "$multi_env_cmd"
+  local multi_env_result=$?
   normalise_timers $multi_env_out
 
-  local multi_arg_cmd="mocha -R $mocha_multi --reporter-options '$reporter=$multi_arg_out' | cat"
-  log "Running formatter via mocha-multi using --reporter-options: $multi_arg_cmd"
-  eval $multi_arg_cmd
-  local multi_arg_result=${PIPESTATUS[0]}
+  local multi_arg_cmd="mocha -R $mocha_multi --reporter-options '$reporter=$multi_arg_out'"
+  eval_notty "via mocha-multi using --reporter-options" "$multi_arg_cmd"
+  local multi_arg_result=$?
   normalise_timers $multi_arg_out
 
   log "Comparing exit codes"
