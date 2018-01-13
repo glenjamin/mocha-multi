@@ -86,14 +86,13 @@ This is very hacky, specifically:
 Could this be a bit less hacky?
 -------------------------------
 
- * Now that https://github.com/mochajs/mocha/pull/1059 is released the process.exit hack could be tidier
+ * Now that https://github.com/mochajs/mocha/pull/1059 is released the process.exit hack could maybe be tidier
 
  * Having each reporter run in a child process would make it eaiser to capture their streams, but might lead to other issues
 
 TODO
 ----
 
-* Update hack now that https://github.com/mochajs/mocha/pull/1059 is merged
 * Add tests for coverage reports
 * Add tests which produce multiple reports at once
 * Add test for help text
@@ -110,6 +109,7 @@ The breaking changes are mostly around internals, and shouldn't affect most peop
 * BREAKING: new MochaMulti(...).options removed
 * BREAKING: Must run at least mocha@>=2.2.0
 * BREAKING: Must run at least node@>=6.0.0
+* Correctly set exit code when writing to files
 * Declare support for mocha@^4.0.0
 * Support running mocha without a run callback
 * Upgrade to ES2015+ via eslint-preset-airbnb-base (MochaMulti is an ES class)
