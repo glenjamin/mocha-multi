@@ -1,4 +1,5 @@
 const fs = require('fs');
+const once = require('lodash.once');
 const util = require('util');
 const assign = require('object-assign');
 const debug = require('debug')('mocha:multi');
@@ -18,11 +19,18 @@ function defineGetter(obj, prop, get) {
 const waitOn = fn => v => new Promise(resolve => fn(v, () => resolve()));
 const waitStream = waitOn((r, fn) => r.end(fn));
 
-function awaitStreamsOnExit(streams) {
+function awaitOnExit(waitFor) {
+  if (!waitFor) {
+    return;
+  }
   const { exit } = process;
-  process.exit = (code) => {
-    const quit = exit.bind(process, code);
-    Promise.all(streams.map(waitStream)).then(quit);
+  process.exit = function mochaMultiExitPatch(...args) {
+    const quit = exit.bind(this, ...args);
+    if (process._exiting) {
+      return quit();
+    }
+    waitFor().then(quit);
+    return undefined;
   };
 }
 
@@ -174,13 +182,14 @@ function initReportersAndStreams(runner, setup, multiOptions) {
 
       return withReplacedStdout(stream, () => {
         const Reporter = resolveReporter(reporter);
-        return new Reporter(shim, assign({}, multiOptions, {
-          reporterOptions: options || {},
-        }));
+        return {
+          stream,
+          reporter: new Reporter(shim, assign({}, multiOptions, {
+            reporterOptions: options || {},
+          })),
+        };
       });
-    })
-    // Remove nulls
-    .filter(identity);
+    });
 }
 
 function promiseProgress(items, fn) {
@@ -197,15 +206,16 @@ function promiseProgress(items, fn) {
 /**
  * Override done to allow done processing for any reporters that have a done method.
  */
-function done(failures, fn, reportersWithDone) {
+function done(failures, fn, reportersWithDone, waitFor = identity) {
   const count = reportersWithDone.length;
   const waitReporter = waitOn((r, f) => r.done(failures, f));
   const progress = v => debug('Awaiting on %j reporters to invoke done callback.', count - v);
   promiseProgress(reportersWithDone.map(waitReporter), progress)
     .then(() => {
       debug('All reporters invoked done callback.');
-      fn && fn(failures);
-    });
+    })
+    .then(waitFor)
+    .then(() => fn && fn(failures));
 }
 
 function mochaMulti(runner, options) {
@@ -230,17 +240,24 @@ function mochaMulti(runner, options) {
   debug('setup %j', setup);
   // If the reporter possess a done() method register it so we can
   // wait for it to complete when done.
-  const streams = initReportersAndStreams(runner, setup, options);
-  const reportersWithDone = streams.filter(v => v.done);
+  const reportersAndStreams = initReportersAndStreams(runner, setup, options);
+  const streams = reportersAndStreams
+    .map(v => v.stream)
+    .filter(identity);
+  const reportersWithDone = reportersAndStreams
+    .map(v => v.reporter)
+    .filter(v => v.done);
 
   // we actually need to wait streams only if they are present
-  if (streams.length > 0) {
-    awaitStreamsOnExit(streams);
-  }
+  const waitFor = streams.length > 0 ?
+    once(() => Promise.all(streams.map(waitStream))) :
+    undefined;
+
+  awaitOnExit(waitFor);
 
   if (reportersWithDone.length > 0) {
     return {
-      done: (failures, fn) => done(failures, fn, reportersWithDone),
+      done: (failures, fn) => done(failures, fn, reportersWithDone, waitFor),
     };
   }
 
