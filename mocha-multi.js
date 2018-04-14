@@ -63,11 +63,14 @@ function parseReporter(definition) {
 function parseSetup() {
   const reporterDefinition = process.env.multi || '';
   const reporterDefs = reporterDefinition.trim().split(/\s/).filter(identity);
-  if (!reporterDefs.length) {
-    bombOut('no_definitions');
-  }
+  if (!reporterDefs.length) { bombOut('no_definitions'); }
   debug('Got reporter defs: %j', reporterDefs);
-  return reporterDefs.map(parseReporter);
+  let reporters = {};
+  reporterDefs.forEach( (def) => {
+    const pair = parseReporter(def);
+    reporters[ pair[0] ] = pair[1];
+  } );
+  return convertSetup( reporters );
 }
 
 function convertSetup( reporters ) {
