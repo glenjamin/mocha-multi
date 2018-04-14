@@ -70,6 +70,25 @@ function parseSetup() {
   return reporterDefs.map(parseReporter);
 }
 
+function convertSetup( reporters ) {
+  let setup = [];
+  Object.keys(reporters).forEach( (reporter) => {
+    if( reporter == "mocha-multi" ) {
+      debug('loading reporters from file %j', reporters[reporter]);
+      setup = setup.concat( convertSetup( JSON.parse(fs.readFileSync(reporters[reporter])) ) );
+    } else {
+      debug('adding reporter %j %j', reporter, reporters[reporter]);
+      const r = reporters[reporter];
+      if( isString(r) ) {
+        setup.push( [reporter, r, null] );
+      } else {
+        setup.push( [reporter, r.stdout, r.options] );
+      }
+    };
+  } );
+  return setup;
+}
+
 function resolveStream(destination) {
   if (destination === '-') {
     debug("Resolved stream '-' into stdout and stderr");
@@ -224,16 +243,7 @@ function mochaMulti(runner, options) {
   const setup = (() => {
     if (reporters && Object.keys(reporters).length > 0) {
       debug('options %j', options);
-      return Object.keys(reporters).map((reporter) => {
-        debug('adding reporter %j %j', reporter, reporters[reporter]);
-        const r = reporters[reporter];
-
-        if (isString(r)) {
-          return [reporter, r, null];
-        }
-
-        return [reporter, r.stdout, r.options];
-      });
+      return convertSetup( reporters );
     }
     return parseSetup();
   })();
