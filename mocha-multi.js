@@ -60,36 +60,36 @@ function parseReporter(definition) {
   return pair;
 }
 
+function convertSetup(reporters) {
+  let setup = [];
+  Object.keys(reporters).forEach((reporter) => {
+    if (reporter==='mocha-multi') {
+      debug('loading reporters from file %j', reporters[reporter]);
+      setup = setup.concat(convertSetup(JSON.parse(fs.readFileSync(reporters[reporter]))));
+    } else {
+      debug('adding reporter %j %j', reporter, reporters[reporter]);
+      const r = reporters[reporter];
+      if (isString(r)) {
+        setup.push([reporter, r, null]);
+      } else {
+        setup.push([reporter, r.stdout, r.options]);
+      }
+    }
+  });
+  return setup;
+}
+
 function parseSetup() {
   const reporterDefinition = process.env.multi || '';
   const reporterDefs = reporterDefinition.trim().split(/\s/).filter(identity);
   if (!reporterDefs.length) { bombOut('no_definitions'); }
   debug('Got reporter defs: %j', reporterDefs);
-  let reporters = {};
-  reporterDefs.forEach( (def) => {
-    const pair = parseReporter(def);
-    reporters[ pair[0] ] = pair[1];
-  } );
-  return convertSetup( reporters );
-}
-
-function convertSetup( reporters ) {
-  let setup = [];
-  Object.keys(reporters).forEach( (reporter) => {
-    if( reporter == "mocha-multi" ) {
-      debug('loading reporters from file %j', reporters[reporter]);
-      setup = setup.concat( convertSetup( JSON.parse(fs.readFileSync(reporters[reporter])) ) );
-    } else {
-      debug('adding reporter %j %j', reporter, reporters[reporter]);
-      const r = reporters[reporter];
-      if( isString(r) ) {
-        setup.push( [reporter, r, null] );
-      } else {
-        setup.push( [reporter, r.stdout, r.options] );
-      }
-    };
-  } );
-  return setup;
+  const reporters = {}; // const but not readonly
+  reporterDefs.forEach((def) => {
+    const [reporter,r] = parseReporter(def);
+    reporters[reporter] = r;
+  });
+  return convertSetup(reporters);
 }
 
 function resolveStream(destination) {
@@ -246,7 +246,7 @@ function mochaMulti(runner, options) {
   const setup = (() => {
     if (reporters && Object.keys(reporters).length > 0) {
       debug('options %j', options);
-      return convertSetup( reporters );
+      return convertSetup(reporters);
     }
     return parseSetup();
   })();
