@@ -63,7 +63,7 @@ function parseReporter(definition) {
 function convertSetup(reporters) {
   let setup = [];
   Object.keys(reporters).forEach((reporter) => {
-    if (reporter==='mocha-multi') {
+    if (reporter === 'mocha-multi') {
       debug('loading reporters from file %j', reporters[reporter]);
       setup = setup.concat(convertSetup(JSON.parse(fs.readFileSync(reporters[reporter]))));
     } else {
@@ -86,7 +86,7 @@ function parseSetup() {
   debug('Got reporter defs: %j', reporterDefs);
   const reporters = {}; // const but not readonly
   reporterDefs.forEach((def) => {
-    const [reporter,r] = parseReporter(def);
+    const [reporter, r] = parseReporter(def);
     reporters[reporter] = r;
   });
   return convertSetup(reporters);
