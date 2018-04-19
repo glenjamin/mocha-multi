@@ -45,6 +45,8 @@ const msgs = {
   invalid_definition: "'%s' is an invalid definition\n" +
                       'expected <reporter>=<destination>',
   invalid_reporter: "Unable to find '%s' reporter",
+  invalid_setup: "Invalid setup for reporter '%s' (%s)",
+  invalid_outfile: "Invalid stdout filename for reporter '%s' (%s)",
 };
 function bombOut(id, ...args) {
   const newArgs = [`ERROR: ${msgs[id]}`, ...args];
@@ -72,9 +74,9 @@ function convertSetup(reporters) {
       if (isString(r)) {
         setup.push([reporter, r, null]);
       } else if (typeof r !== 'object') {
-        throw new Error(`Invalid setup for reporter ${reporter} (${typeof r})`);
+        bombOut('invalid_setup', reporter, typeof r);
       } else {
-        if (typeof r.stdout !== 'string') { throw new Error(`Invalid stdout filename for reporter ${reporter} (${typeof r.stdout})`); }
+        if (typeof r.stdout !== 'string') { bombOut('invalid_setup', reporter, typeof r); }
         setup.push([reporter, r.stdout, r.options]);
       }
     }
