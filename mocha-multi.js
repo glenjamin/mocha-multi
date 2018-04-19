@@ -67,11 +67,14 @@ function convertSetup(reporters) {
       debug('loading reporters from file %j', reporters[reporter]);
       setup = setup.concat(convertSetup(JSON.parse(fs.readFileSync(reporters[reporter]))));
     } else {
-      debug('adding reporter %j %j', reporter, reporters[reporter]);
       const r = reporters[reporter];
+      debug('adding reporter %j %j', reporter, r);
       if (isString(r)) {
         setup.push([reporter, r, null]);
+      } else if (typeof r !== 'object') {
+        throw new Error(`Invalid setup for reporter ${reporter} (${typeof r})`);
       } else {
+        if (typeof r.stdout !== 'string') { throw new Error(`Invalid stdout filename for reporter ${reporter} (${typeof r.stdout})`); }
         setup.push([reporter, r.stdout, r.options]);
       }
     }
