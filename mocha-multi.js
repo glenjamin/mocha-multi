@@ -47,6 +47,7 @@ const msgs = {
   invalid_reporter: "Unable to find '%s' reporter",
   invalid_setup: "Invalid setup for reporter '%s' (%s)",
   invalid_outfile: "Invalid stdout filename for reporter '%s' (%s)",
+  bad_file: "Missing or malformed options file '%s' -- %s",
 };
 function bombOut(id, ...args) {
   const newArgs = [`ERROR: ${msgs[id]}`, ...args];
@@ -67,7 +68,11 @@ function convertSetup(reporters) {
   Object.keys(reporters).forEach((reporter) => {
     if (reporter === 'mocha-multi') {
       debug('loading reporters from file %j', reporters[reporter]);
-      setup = setup.concat(convertSetup(JSON.parse(fs.readFileSync(reporters[reporter]))));
+      try {
+        setup = setup.concat(convertSetup(JSON.parse(fs.readFileSync(reporters[reporter]))));
+      } catch (e) {
+        bombOut('bad_file', reporters[reporter], e);
+      }
     } else {
       const r = reporters[reporter];
       debug('adding reporter %j %j', reporter, r);

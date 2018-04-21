@@ -104,6 +104,16 @@ function compare {
   fi
 }
 
+badfilecheck="ERROR: Missing or malformed options file 'missing.json' -- Error: ENOENT: no such file or directory, open 'missing.json'"
+badfile=`mocha --reporter "$mocha_multi" --reporter-options mocha-multi=missing.json --recursive test 2>&1`
+log "$badfile"
+if [ "$badfile" != "$badfilecheck" ]; then
+  log "Wrong error message trying to load missing options file" fail
+  exit 1
+else
+  log "Correct error message trying to load missing options file" pass
+fi
+
 if [ "$1" = "" ]; then
   log "No reporter chosen"
   exit 1
