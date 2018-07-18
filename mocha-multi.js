@@ -45,6 +45,9 @@ const msgs = {
   invalid_definition: "'%s' is an invalid definition\n" +
                       'expected <reporter>=<destination>',
   invalid_reporter: "Unable to find '%s' reporter",
+  invalid_setup: "Invalid setup for reporter '%s' (%s)",
+  invalid_outfile: "Invalid stdout filename for reporter '%s' (%s)",
+  bad_file: "Missing or malformed options file '%s' -- %s",
 };
 function bombOut(id, ...args) {
   const newArgs = [`ERROR: ${msgs[id]}`, ...args];
@@ -60,14 +63,43 @@ function parseReporter(definition) {
   return pair;
 }
 
+function convertSetup(reporters) {
+  let setup = [];
+  Object.keys(reporters).forEach((reporter) => {
+    if (reporter === 'mocha-multi') {
+      debug('loading reporters from file %j', reporters[reporter]);
+      try {
+        setup = setup.concat(convertSetup(JSON.parse(fs.readFileSync(reporters[reporter]))));
+      } catch (e) {
+        bombOut('bad_file', reporters[reporter], e);
+      }
+    } else {
+      const r = reporters[reporter];
+      debug('adding reporter %j %j', reporter, r);
+      if (isString(r)) {
+        setup.push([reporter, r, null]);
+      } else if (typeof r !== 'object') {
+        bombOut('invalid_setup', reporter, typeof r);
+      } else {
+        if (typeof r.stdout !== 'string') { bombOut('invalid_setup', reporter, typeof r); }
+        setup.push([reporter, r.stdout, r.options]);
+      }
+    }
+  });
+  return setup;
+}
+
 function parseSetup() {
   const reporterDefinition = process.env.multi || '';
   const reporterDefs = reporterDefinition.trim().split(/\s/).filter(identity);
-  if (!reporterDefs.length) {
-    bombOut('no_definitions');
-  }
+  if (!reporterDefs.length) { bombOut('no_definitions'); }
   debug('Got reporter defs: %j', reporterDefs);
-  return reporterDefs.map(parseReporter);
+  const reporters = {}; // const but not readonly
+  reporterDefs.forEach((def) => {
+    const [reporter, r] = parseReporter(def);
+    reporters[reporter] = r;
+  });
+  return convertSetup(reporters);
 }
 
 function resolveStream(destination) {
@@ -224,16 +256,7 @@ function mochaMulti(runner, options) {
   const setup = (() => {
     if (reporters && Object.keys(reporters).length > 0) {
       debug('options %j', options);
-      return Object.keys(reporters).map((reporter) => {
-        debug('adding reporter %j %j', reporter, reporters[reporter]);
-        const r = reporters[reporter];
-
-        if (isString(r)) {
-          return [reporter, r, null];
-        }
-
-        return [reporter, r.stdout, r.options];
-      });
+      return convertSetup(reporters);
     }
     return parseSetup();
   })();

@@ -39,12 +39,13 @@ function compare {
   local builtin_out=$(mktemp /tmp/mocha-multi.XXXXXXXXX)
   local multi_env_out=$(mktemp /tmp/mocha-multi.XXXXXXXXX)
   local multi_arg_out=$(mktemp /tmp/mocha-multi.XXXXXXXXX)
+  local multi_file_in=$(mktemp /tmp/mocha-multi.XXXXXXXXX)
+  local multi_file_out=$(mktemp /tmp/mocha-multi.XXXXXXXXX)
 
   local builtin_cmd="mocha -R $reporter &> $builtin_out"
   eval_notty "normally" "$builtin_cmd"
   local builtin_result=$?
   normalise_timers $builtin_out
-
 
   local multi_env_cmd="multi='$reporter=$multi_env_out' mocha -R $mocha_multi"
   eval_notty "via mocha-multi using environment variable" "$multi_env_cmd"
@@ -56,15 +57,22 @@ function compare {
   local multi_arg_result=$?
   normalise_timers $multi_arg_out
 
+  echo "{\"$reporter\": \"$multi_file_out\"}" > "$multi_file_in"
+  local multi_file_cmd="mocha -R $mocha_multi --reporter-options 'mocha-multi=$multi_file_in'"
+  eval_notty "via mocha-multi using file" "$multi_file_cmd"
+  local multi_file_result=$?
+  normalise_timers $multi_file_out
+
   log "Comparing exit codes"
 
-  if [ "$builtin_result" = "$multi_arg_result" -a "$builtin_result" = "$multi_env_result" ]; then
+  if [ "$builtin_result" = "$multi_arg_result" -a "$builtin_result" = "$multi_env_result" -a "$builtin_result" = "$multi_file_result" ]; then
     log 'Codes match, hooray!' pass
   else
     log "Codes do not match" fail
     log "Result ${normal}$builtin_result"
     log "Result (env) ${normal}$multi_env_result"
     log "Result (arg) ${normal}$multi_arg_result"
+    log "Result (file) ${normal}$multi_file_result"
     return 1
   fi
 
@@ -78,18 +86,33 @@ function compare {
   log "Running $diff_cmd_arg"
   local difference_arg=$($diff_cmd_arg)
 
-  rm "$builtin_out" "$multi_env_out" "$multi_arg_out"
+  local diff_cmd_file="diff -U1 -Lbuiltin -Lmulti $builtin_out $multi_file_out"
+  log "Running $diff_cmd_file"
+  local difference_file=$($diff_cmd_file)
 
-  if [ "$difference_env" = "" -a "$difference_arg" = "" ]; then
+  rm "$builtin_out" "$multi_env_out" "$multi_arg_out" "$multi_file_out" "$multi_file_in"
+
+  if [ "$difference_env" = "" -a "$difference_arg" = ""  -a "$difference_file" = "" ]; then
     log 'Output matches, hooray!' pass
     return 0
   else
     log "Output does not match" fail
     log "Difference (env)\n${normal}$difference_env"
     log "Difference (arg)\n${normal}$difference_arg"
+    log "Difference (file)\n${normal}$difference_file"
     return 1
   fi
 }
+
+badfilecheck="ERROR: Missing or malformed options file 'missing.json' -- Error: ENOENT: no such file or directory, open 'missing.json'"
+badfile=`mocha --reporter "$mocha_multi" --reporter-options mocha-multi=missing.json --recursive test 2>&1`
+log "$badfile"
+if [ "$badfile" != "$badfilecheck" ]; then
+  log "Wrong error message trying to load missing options file" fail
+  exit 1
+else
+  log "Correct error message trying to load missing options file" pass
+fi
 
 if [ "$1" = "" ]; then
   log "No reporter chosen"

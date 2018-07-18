@@ -33,6 +33,12 @@ Pass `--reporter-options` with comma-separated type=destination pairs.
 mocha -R mocha-multi --reporter-options dot=-,xunit=file.xml,doc=docs.html
 ```
 
+### From a file
+
+Using either of the above methods, include a type=destination pair where the type is mocha-multi and the destination is a filename, e.g. `mocha-multi=mocha-multi-reporters.json`
+
+More reporters will be loaded from the named file, which must be valid JSON in the same data format described below for passing reporterOptions to Mocha programmatically.
+
 Using mocha-multi programmatically
 ----------------------------------
 
