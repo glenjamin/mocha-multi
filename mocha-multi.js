@@ -47,7 +47,7 @@ const msgs = {
   invalid_reporter: "Unable to find '%s' reporter",
   invalid_setup: "Invalid setup for reporter '%s' (%s)",
   invalid_outfile: "Invalid stdout filename for reporter '%s' (%s)",
-  bad_file: "Missing or malformed options file '%s' -- %s",
+  bad_file: "Missing or malformed options file '%s' -- Error: %s",
 };
 function bombOut(id, ...args) {
   const newArgs = [`ERROR: ${msgs[id]}`, ...args];
@@ -71,7 +71,7 @@ function convertSetup(reporters) {
       try {
         setup = setup.concat(convertSetup(JSON.parse(fs.readFileSync(reporters[reporter]))));
       } catch (e) {
-        bombOut('bad_file', reporters[reporter], e);
+        bombOut('bad_file', reporters[reporter], e.message);
       }
     } else {
       const r = reporters[reporter];
