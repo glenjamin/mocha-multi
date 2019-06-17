@@ -181,6 +181,7 @@ function createRunnerShim(runner, stream) {
   addDelegate('grepTotal');
   addDelegate('suite');
   addDelegate('total');
+  addDelegate('stats');
 
   const delegatedEvents = {};
 
