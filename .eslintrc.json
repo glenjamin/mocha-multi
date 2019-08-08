@@ -8,7 +8,9 @@
         "no-process-exit": 0,
         "no-underscore-dangle": 0,
         "no-unused-expressions": 0,
-        "node/no-unpublished-require": 0
+        "node/no-unpublished-require": 0,
+        "operator-linebreak": [ "error", "after" ],
+        "strict": 0
     },
     "overrides": [
         {
