@@ -13,8 +13,8 @@ require('mocha/lib/reporters/base');
 // Make sure we don't lose these!
 const { stdout } = process;
 
-function defineGetter(obj, prop, get) {
-  Object.defineProperty(obj, prop, { get });
+function defineGetter(obj, prop, get, set) {
+  Object.defineProperty(obj, prop, { get, set });
 }
 const waitOn = fn => v => new Promise(resolve => fn(v, () => resolve()));
 const waitStream = waitOn((r, fn) => r.end(fn));
@@ -169,13 +169,15 @@ function createRunnerShim(runner, stream) {
   const shim = new (require('events').EventEmitter)();
 
   function addDelegate(prop) {
-    defineGetter(shim, prop, () => {
-      const property = runner[prop];
-      if (typeof property === 'function') {
-        return property.bind(runner);
-      }
-      return property;
-    });
+    defineGetter(shim, prop,
+      () => {
+        const property = runner[prop];
+        if (typeof property === 'function') {
+          return property.bind(runner);
+        }
+        return property;
+      },
+      () => runner[prop]);
   }
 
   addDelegate('grepTotal');
