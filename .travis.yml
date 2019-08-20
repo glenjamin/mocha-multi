@@ -6,5 +6,8 @@ script: |
   npm install mocha@$MOCHA
   npm run ci
 env:
+  - MOCHA=2
+  - MOCHA=3
+  - MOCHA=4
   - MOCHA=5
   - MOCHA=6
