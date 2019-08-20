@@ -16,4 +16,3 @@ node_modules
 file.*
 .idea
 
-package-lock.json
