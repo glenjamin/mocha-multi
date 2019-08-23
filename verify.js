@@ -8,7 +8,7 @@ const chalk = require('chalk');
 const reporters = [
   'dot', 'doc', 'spec', 'json', 'progress',
   'list', 'tap', 'landing', 'xunit', 'min',
-  'json-stream', 'markdown', 'nyan',
+  'json-stream', 'markdown', 'nyan', 'fixtures/dummy-reporter.js',
 ];
 const now = new Date();
 
@@ -50,7 +50,7 @@ async.eachSeries(reportersWithOptions, (reporter, next) => {
   debug('reporterOptions %j', reporter.options);
   const mocha = new Mocha({
     ui: 'bdd',
-    reporter: 'mocha-multi',
+    reporter: 'src/mocha-multi',
     reporterOptions: reporter.options,
   });
   mocha.addFile('test/dummy-spec.js');
