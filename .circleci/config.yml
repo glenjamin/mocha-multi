@@ -1,0 +1,11 @@
+version: 2.1
+workflows:
+  workflow:
+    jobs:
+      - build
+jobs:
+  build:
+    docker:
+      - image: circleci/python:3
+    steps:
+      - run: echo hi
