@@ -135,6 +135,7 @@ function resolveReporter(name) {
   const reporter = (
     safeRequire(`mocha/lib/reporters/${name}`) ||
     safeRequire(name) ||
+    safeRequire(path.resolve(process.cwd(), name)) ||
     bombOut('invalid_reporter', name)
   );
   debug("Resolved reporter '%s' into '%s'", name, util.inspect(reporter));
