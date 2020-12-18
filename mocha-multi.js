@@ -293,6 +293,14 @@ function mochaMulti(runner, options) {
 
 class MochaMulti {
   constructor(runner, options) {
+    debugger;
+    if (options.mochaMultiOptions) {
+      let reporterOptions = options.mochaMultiOptions;
+      if (typeof reporterOptions === 'string') {
+        reporterOptions = JSON.parse(reporterOptions);
+      }
+      Object.assign(options, { reporterOptions });
+    }
     Object.assign(this, mochaMulti(runner, options));
   }
 }
