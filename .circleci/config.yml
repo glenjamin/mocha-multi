@@ -2,10 +2,12 @@ version: 2.1
 workflows:
   workflow:
     jobs:
-      - build
+      - test
 jobs:
-  build:
+  test:
     docker:
-      - image: circleci/python:3
+      - image: cimg/node:lts
     steps:
-      - run: echo hi
+      - checkout
+      - run: npm ci
+      - run: npm run ci
