@@ -43,7 +43,7 @@
     "object-assign": "^4.1.1"
   },
   "peerDependencies": {
-    "mocha": ">=2.2.0 <7 || ^9"
+    "mocha": ">=2.2.0 <7 || ^9 || ^10"
   },
   "engines": {
     "node": ">=6.0.0"
