@@ -3,7 +3,7 @@ mocha-multi
 
 A bit of a hack to get multiple reporters working with mocha
 
-[![Build Status](https://travis-ci.org/glenjamin/mocha-multi.svg?branch=master)](https://travis-ci.org/glenjamin/mocha-multi)
+[![mocha-multi](https://circleci.com/gh/glenjamin/mocha-multi.svg?style=shield)](https://app.circleci.com/pipelines/github/glenjamin/mocha-multi)
 [![NPM version](https://img.shields.io/npm/v/mocha-multi.svg)](https://www.npmjs.com/package/mocha-multi)
 
 Usage
