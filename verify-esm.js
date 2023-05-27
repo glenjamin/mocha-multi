@@ -47,17 +47,7 @@ const chalk = require('chalk');
         outFilename,
         options
       };
-    }))
-    // .concat(reporters.map((reporter) => {
-    //   const outFilename = tempName(`${reporter}-str`);
-    //   const options = {};
-    //   options[reporter] = outFilename;
-    //   return {
-    //     testName: `${reporter} (with options as string)`,
-    //     outFilename,
-    //     options,
-    //   };
-    // }));
+    }));
 
   should(process.env.multi).not.be.ok;
 
