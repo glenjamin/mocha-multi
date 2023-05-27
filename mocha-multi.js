@@ -130,14 +130,16 @@ function safeRequire(module) {
   }
 }
 
-function resolveReporter(name) {
+function resolveReporter(name, constructorFn) {
   // Cribbed from Mocha.prototype.reporter()
-  const reporter = (
-    safeRequire(`mocha/lib/reporters/${name}`) ||
+  const reporter = typeof constructorFn === 'function' ?
+    constructorFn :
+    (
+      safeRequire(`mocha/lib/reporters/${name}`) ||
     safeRequire(name) ||
     safeRequire(path.resolve(process.cwd(), name)) ||
     bombOut('invalid_reporter', name)
-  );
+    );
   debug("Resolved reporter '%s' into '%s'", name, util.inspect(reporter));
   return reporter;
 }
@@ -170,7 +172,9 @@ function createRunnerShim(runner, stream) {
   const shim = new (require('events').EventEmitter)();
 
   function addDelegate(prop) {
-    defineGetter(shim, prop,
+    defineGetter(
+      shim,
+      prop,
       () => {
         const property = runner[prop];
         if (typeof property === 'function') {
@@ -178,7 +182,9 @@ function createRunnerShim(runner, stream) {
         }
         return property;
       },
-      () => runner[prop]);
+      // eslint-disable-next-line node/no-unsupported-features/es-syntax
+      () => runner[prop],
+    );
   }
 
   addDelegate('grepTotal');
@@ -217,7 +223,13 @@ function initReportersAndStreams(runner, setup, multiOptions) {
       debug("Shimming runner into reporter '%s' %j", reporter, options);
 
       return withReplacedStdout(stream, () => {
-        const Reporter = resolveReporter(reporter);
+        const constructorFn = multiOptions &&
+          multiOptions.reporterOptions &&
+          multiOptions.reporterOptions[reporter] &&
+          multiOptions.reporterOptions[reporter].constructorFn ?
+          multiOptions.reporterOptions[reporter].constructorFn :
+          null;
+        const Reporter = resolveReporter(reporter, constructorFn);
         return {
           stream,
           reporter: new Reporter(shim, assign({}, multiOptions, {
@@ -237,7 +249,6 @@ function promiseProgress(items, fn) {
   }));
   return Promise.all(items);
 }
-
 
 /**
  * Override done to allow done processing for any reporters that have a done method.
