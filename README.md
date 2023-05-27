@@ -3,7 +3,7 @@ mocha-multi
 
 A bit of a hack to get multiple reporters working with mocha
 
-[![Build Status](https://travis-ci.org/glenjamin/mocha-multi.svg?branch=master)](https://travis-ci.org/glenjamin/mocha-multi)
+[![mocha-multi](https://circleci.com/gh/glenjamin/mocha-multi.svg?style=shield)](https://app.circleci.com/pipelines/github/glenjamin/mocha-multi)
 [![NPM version](https://img.shields.io/npm/v/mocha-multi.svg)](https://www.npmjs.com/package/mocha-multi)
 
 Usage
@@ -46,7 +46,7 @@ You may specify the desired reporters (and their options) by passing `reporterOp
 
 For example: the following config is the equivalent of setting `multi='spec=- Progress=/tmp/mocha-multi.Progress.out'`, with the addition of passing the `verbose: true` option to the Progress reporter.
 
-```sh
+```javascript
 var reporterOptions = {
 	Progress: {
 		stdout: "/tmp/mocha-multi.Progress.out",
@@ -69,6 +69,66 @@ mocha.run(function onRun(failures){
 ```
 
 The options will be passed as the second argument to the reporter constructor.
+
+Using mocha-multi programmatically with custom reporters built in ESM
+---------------------------------------------------------------------
+
+To load a custom reporter built in ESM, you must pass the class name into the mocha-multi reporter options. When using reporter names passed in as strings, Mocha attempts to load them as CommonJS modules, using require, which won't work. Here is an example loading an ESM custom reporter programmatically. 
+
+**mocha-run-esm-reporter.mjs**:
+
+```javascript
+import Mocha from 'mocha';
+
+// These lines make "require" available
+// see https://www.kindacode.com/article/node-js-how-to-use-import-and-require-in-the-same-file/
+import { createRequire } from 'module';
+global.require = createRequire(import.meta.url);
+
+const Reporter = (await import('./custom-esm-reporter.mjs')).default;
+
+const mocha = new Mocha({
+    reporter: "mocha-multi",
+    reporterOptions: {
+        spec: "-",
+        customEsmReporter: {
+            "constructorFn": Reporter,
+            "stdout": "/tmp/custom-esm-reporter.stdout",
+            "options": {
+                "option1": "value1",
+                "option2": "value2"
+            }
+        }
+    }
+});
+
+// this is required to load the globals (describe, it, etc) in the test files
+mocha.suite.emit('pre-require', global, 'nofile', mocha);
+
+// dynamic import works for both cjs and esm.
+await import('./test/dummy-spec.js');
+await import('./test/dummy-spec.mjs');
+
+// require only works for cjs, not for esm.
+// require('./test/dummy-spec.js');
+// require('./test/dummy-spec.mjs');
+
+
+const suiteRun = mocha.run();
+
+process.on('exit', (code) => {
+    process.exit(suiteRun.stats.failures);
+});
+```
+
+To run programmatically, just use node:
+
+```
+$ node mocha-run-esm-reporter.mjs
+```
+
+(Note that CommonJS reporters can also be loaded in this manner)
+
 
 How it works
 ------------
